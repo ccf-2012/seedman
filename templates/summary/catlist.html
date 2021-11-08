@@ -1,0 +1,180 @@
+{% extends "base_generic.html" %} 
+{% load static %}
+{% block stylesheet %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="{% static 'ajax_datatable/css/style.css' %}" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">  
+{% endblock %} 
+
+{% block content %}
+
+<nav class="nav nav-tabs justify-content-center">
+	<a class="nav-link active" href="{% url 'sum_cat_index' %}">分类</a>
+	<a class="nav-link " href="{% url 'sum_tracker_index' %}">站点</a>
+	<a class="nav-link" href="{% url 'sum_dir_index' %}">存储位置</a>
+</nav>
+
+  
+  <div class="row my-3 ">
+	<div class="col-5">
+
+		<div class="row my-3 mx-3 text-center">
+			<div class="col ">
+			  <h4>{{num_category}}<span style="margin-left:6px;font-size:16px;font-weight:normal;color:#888">分类</span></h4>
+			</div>
+			<div class="col ">
+			  <h4>{{num_torrent}}<span style="margin-left:6px;font-size:16px;font-weight:normal;color:#888">种子</span></h4>
+			</div>
+			<div class="col ">
+			  <h4>{{size_torrent}}<small></small></h4>
+			</div>
+		  </div>
+		
+	  <canvas id="myDoughnutChart"></canvas>
+	</div>
+	<div class="col">
+
+		<div class="table-responsive my-3">
+			<table id="cat_datatable"  width="100%" class="table  display cell-border">
+			</table>
+		</div>
+
+	</div>
+  </div>
+</div>
+
+{% endblock %} 
+
+{% block script%}
+<script type="text/javascript" src="{% static 'ajax_datatable/js/utils.js' %}"></script>    
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
+
+
+<script language="javascript">
+
+    $( document ).ready(function() {
+        AjaxDatatableViewUtils.init({
+            language: {
+                "info": "第 _START_ - _END_ 条 / 总 _TOTAL_ 条",
+                "lengthMenu": "每页显示  _MENU_ 条",
+                "search": "查找: ",
+				"zeroRecords": "现在这里空空的",
+				"infoEmpty": "没什么可说的",
+				"paginate": {
+                    'previous': '前一页',
+                    'next': '后一页'
+                }
+            }
+        });
+        AjaxDatatableViewUtils.initialize_table(
+            $('#cat_datatable'),
+            "{% url 'sum_cat_table' %}",
+            {
+                // extra_options (example)
+                processing: false,
+                autoWidth: true,
+                full_row_select: false,
+                scrollX: true,
+				searching: false, paging: false, info: false           
+            },
+        );
+    });
+
+</script>
+
+<script>
+	
+	var chkSize = document.getElementById('chkBySize');
+	var doughnutctx = document.getElementById('myDoughnutChart').getContext('2d');
+	var myChart1 = new Chart(doughnutctx, {
+		type: 'doughnut',
+		data: {
+			labels: [{%for data in cat_data %}'{{data.label}}',{% endfor %}],
+			datasets: [{
+				label: '',
+				data: [{%for data in cat_data %}{{ data.size }}, {% endfor %}],
+				backgroundColor: backgroundColorList,
+				borderColor: borderColorList,
+				borderWidth: 1
+			}]
+		},
+		options: {
+			responsive: true,
+			plugins: {
+				legend: {
+					display: true,
+					position: 'bottom',
+				},
+				tooltip: {
+					callbacks: {
+						label: function(context) {
+							// console.log(context)
+							return formatBytes(context.parsed);
+						},
+						title: function(context) {
+							let title = context[0].label;
+							return title;
+						}
+					}
+				}      
+			}
+		}
+	});  
+
+	function updateConfigAsNewObject(chart) {
+		chart.options= {
+			responsive: true,
+			plugins: {
+				legend: {
+					display: true,
+					position: 'bottom',
+				},
+				tooltip: {
+					callbacks: {
+						label: function(context) {
+							// console.log(context)
+							if (chkSize.checked)
+								return formatBytes(context.parsed);
+							else return context.formattedValue;
+						},
+						title: function(context) {
+							let title = context[0].label;
+							return title;
+						}
+					}
+				}      
+			}
+		}
+		chart.update();
+	}
+	function removeData(chart) {
+		chart.data.labels.pop();
+		chart.data.datasets.forEach((dataset) => {
+			dataset.data.pop();
+		});
+		chart.update();
+	}
+	function addData(chart, label, data) {
+		chart.data.labels.push(label);
+		chart.data.datasets.forEach((dataset) => {
+			dataset.data.push(data);
+		});
+		chart.update();
+	}
+
+	function updateChart() {
+		updateConfigAsNewObject(myChart1);
+		removeData(myChart1)
+		labels = [{%for data in cat_data %}'{{data.label}}',{% endfor %}];
+		if (chkSize.checked) {
+			jsdata = [{%for data in cat_data %}{{ data.size }}, {% endfor %}];
+		}
+		else {
+			jsdata = [{%for data in cat_data %}{{ data.count }}, {% endfor %}];
+		}
+		console.log(jsdata);
+		addData(myChart1, labels, jsdata);
+	}
+
+</script>
+{% endblock %}

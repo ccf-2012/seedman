@@ -1,0 +1,37 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+
+<div class="row">
+  <span class="ml-3 mt-4 mr-auto">
+    <h4>搜索</h4>
+  </span>
+  <a href="{% url 'sc_loadtorrents' %}" class="btn  btn-outline-primary mr-3 my-3 ">导入数据</a>
+</div>
+
+<form class="form-horizontal" action="{% url 'tor_list' %}" method="get">
+  {% csrf_token %}
+  <div class="row my-3 justify-content-center">
+    <div class="col-lg-6 ">
+      <div class="input-group">
+        <input type="text" class="form-control mr-2" name="q">
+        <span class="input-group-btn">
+          <button class="btn btn-outline-success" type="submit">Go!</button>
+        </span>
+      </div>
+    </div>
+  </div>
+</form>
+
+
+<div id="list_contents">
+  {% include 'torrent/torlist.html' %}
+</div>
+  {% include "_pagination2.html" %}
+
+{% endblock %}
+
+
+{% block script%}
+
+{% endblock %}

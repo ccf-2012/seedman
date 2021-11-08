@@ -1,0 +1,212 @@
+{% extends "base_generic.html" %} {% block stylesheet %}
+<!-- <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %} {% block content %}
+
+
+
+<div class="row">
+  <span class="ml-4 mt-4 mr-auto">
+    <h4><del>智能</del>乱猜分类</h4>
+  </span>
+</div>
+
+<div class="row my-3">
+  <div class="col-8">
+    <canvas id="myBarChart"></canvas>
+  </div>
+  <div class="col">
+    <div id="list_guesscat">{% include 'summary/catlist.html' %}</div>
+
+    <nav aria-label="Page navigation">
+      <ul class="pagination justify-content-center">
+        {% for page_number in page_obj.paginator.page_range %}
+        <li class="page-item">
+            <a class="page-link"  onclick="catPageClick('{{page_number}}')" >
+                {{page_number}}
+            </a>
+        {% endfor %}
+        </li>
+      </ul>
+    </nav>
+  </div>
+</div>
+
+
+<div class="row">
+  <span class="ml-4 mt-4 mr-auto">
+    <h4>站点分类</h4>
+  </span>
+</div>
+
+<div class="row  my-3">
+  <div class="col-5">
+    <canvas id="myDoughnutChart"></canvas>
+  </div>
+  <div class="col">
+    <div id="list_tracker">{% include 'summary/trackerlist.html' %}</div>
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+          {% for page_number in page_tracker.paginator.page_range %}
+          <li class="page-item">
+              <a class="page-link" onclick="catTrackerClick('{{page_number}}')" >
+                  {{page_number}}
+              </a>
+          {% endfor %}
+          </li>
+        </ul>
+    </nav>
+  </div>
+</div>
+
+<div class="row">
+  <span class="ml-4 mt-4 mr-auto">
+    <h4>下载器目录分类</h4>
+  </span>
+</div>
+
+<div class="row  my-3">
+  <div class="col">
+    <div id="list_dir">{% include 'summary/dirlist.html' %}</div>
+
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+          {% for page_number in page_dir.paginator.page_range %}
+          <li class="page-item">
+              <a class="page-link"  onclick="catDirClick('{{page_number}}')" >
+                  {{page_number}}
+              </a>
+          {% endfor %}
+          </li>
+        </ul>
+    </nav>
+  </div>
+</div>
+
+
+
+{% endblock %} 
+
+{% block script%}
+
+<script type="text/javascript">
+  function catPageClick(page) {
+    $.ajax({
+      type: "GET",
+      url: "{% url 'sum_catlist' %}",
+      data: { page: page },
+    }).done(function (response) {
+      $("#list_guesscat").html(response);
+    });
+  }
+  function catDirClick(page) {
+    $.ajax({
+      type: "GET",
+      url: "{% url 'sum_dirlist' %}",
+      data: { pagedir: page },
+    }).done(function (response) {
+      $("#list_dir").html(response);
+    });
+  }  
+  function catTrackerClick(page) {
+    $.ajax({
+      type: "GET",
+      url: "{% url 'sum_trackerlist' %}",
+      data: { pagetracker: page },
+    }).done(function (response) {
+      $("#list_tracker").html(response);
+    });
+  }  
+</script>
+
+<script>
+
+function formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0 Bytes';
+
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+
+  var backgroundColorList = [
+      'rgba(255, 99, 132, 0.2)',
+      'rgba(54, 162, 235, 0.2)',
+      'rgba(255, 206, 86, 0.2)',
+      'rgba(75, 192, 192, 0.2)',
+      'rgba(153, 102, 255, 0.2)',
+      'rgba(255, 159, 64, 0.2)'
+  ];
+  var borderColorList = [
+      'rgba(255, 99, 132, 1)',
+      'rgba(54, 162, 235, 1)',
+      'rgba(255, 206, 86, 1)',
+      'rgba(75, 192, 192, 1)',
+      'rgba(153, 102, 255, 1)',
+      'rgba(255, 159, 64, 1)'
+  ];
+
+
+
+  var doughnutctx = document.getElementById('myDoughnutChart').getContext('2d');
+  var myChart1 = new Chart(doughnutctx, {
+      type: 'doughnut',
+      data: {
+          labels: [{%for data in trackerlist %}'{{data.tracker}}',{% endfor %}],
+  datasets: [{
+      label: '',
+      data: [{%for data in trackerlist %}{{ data.size }}, {% endfor %}],
+      backgroundColor: backgroundColorList,
+          borderColor: borderColorList,
+              borderWidth: 1
+          }]
+      },
+  options: {
+      responsive: false,
+      }
+  });
+  var barctx = document.getElementById('myBarChart').getContext('2d');
+  var myChart2 = new Chart(barctx, {
+      type: 'bar',
+      data: {
+          labels: [{%for data in catlist %}'{{data.label}}',{% endfor %}],
+  datasets: [{
+      label: '',
+      data: [{%for data in catlist %}{{ data.size }}, {% endfor %}],
+      backgroundColor: backgroundColorList,
+          borderColor: borderColorList,
+              borderWidth: 1
+          }]
+      },
+  options: {
+    scales: {
+      y: {
+        ticks: {
+          // Include a dollar sign in the ticks
+          callback: function(value, index, values) {
+              return formatBytes(value, 0);
+          }
+        }
+      }
+    },
+    plugins: {
+      legend: {
+          display: false
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            return formatBytes(context.parsed.y);
+          }
+        }
+      }      
+    }
+  }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base_generic.html" %}
+{% load static %}
+{% block stylesheet %}
+<link href="{% static 'ajax_datatable/css/style.css' %}" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">
+{% endblock %}
+
+{% block content %}
+
+<div class="row my-3 justify-content-center">
+    <div class="col-sm-6">
+        <div class="card ">
+            <div class="card-body">
+                <h5 class="card-title">开始了！</h5>
+                <h6 class="card-subtitle mb-2 text-muted">种子搬动的动作在下载器上进行，运行docker的机器此时不宜当机或休眠, 如果意外发生，只需要重新导入数据开始</h6>
+
+                <p class="card-text">当进度走完就好了，任务在后台运行，等一会儿就好了</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row my-3 justify-content-center">
+    <div class="col-sm-6">
+        <div class="card ">
+            <div id="cat_progress">
+                {% include 'categorize/progress.html' %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script%}
+<script>
+    $(document).ready(function () {
+        {% if refresh %}
+        var append_increment = 0;
+        setInterval(function () {
+            $.ajax({
+                type: "GET",
+                url: "{% url 'cat_update_progress' %}",
+            })
+                .done(function (response) {
+                    $('#cat_progress').html(response);
+                    append_increment += 10;
+                });
+        }, 1000)
+        {% endif %}
+    })
+</script>
+{% endblock %}

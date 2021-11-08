@@ -1,0 +1,115 @@
+{% extends "base_generic.html" %} 
+{% load static %}
+{% block stylesheet %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="{% static 'ajax_datatable/css/style.css' %}" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">  
+{% endblock %} 
+
+{% block content %}
+<nav class="nav nav-tabs justify-content-center">
+	<a class="nav-link" href="{% url 'sum_cat_index' %}">分类</a>
+	<a class="nav-link " href="{% url 'sum_tracker_index' %}">站点</a>
+	<a class="nav-link active" href="{% url 'sum_dir_index' %}">存储位置</a>
+</nav>
+
+	
+  <div class="row my-3">
+	<div class="col-4">
+		{% include "summary/sum_total.html" %}
+		<div class="row mx-3">
+				<canvas id="myDoughnutChart"></canvas>
+		</div>
+	</div>
+
+	<div class="col-8">
+
+		<div class="table-responsive my-3">
+			<table id="cat_datatable"  width="100%" class="table  display cell-border">
+			</table>
+		</div>
+
+	</div>
+</div>
+
+{% endblock %} 
+
+{% block script%}
+<script type="text/javascript" src="{% static 'ajax_datatable/js/utils.js' %}"></script>    
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
+
+
+<script language="javascript">
+
+    $( document ).ready(function() {
+        AjaxDatatableViewUtils.init({
+            language: {
+                "info": "第 _START_ - _END_ 条 / 总 _TOTAL_ 条",
+                "lengthMenu": "每页显示  _MENU_ 条",
+                "search": "查找: ",
+				"zeroRecords": "现在这里空空的",
+				"infoEmpty": "没什么可说的",
+				"paginate": {
+                    'previous': '前一页',
+                    'next': '后一页'
+                }
+            }
+        });
+        AjaxDatatableViewUtils.initialize_table(
+            $('#cat_datatable'),
+            "{% url 'sum_dir_table' %}",
+            {
+                // extra_options (example)
+                processing: false,
+                autoWidth: true,
+                full_row_select: false,
+                scrollX: true,
+				searching: false, paging: false, info: false     
+            },
+        );
+    });
+
+</script>
+
+<script>
+
+	var doughnutctx = document.getElementById('myDoughnutChart').getContext('2d');
+	var myChart1 = new Chart(doughnutctx, {
+		type: 'doughnut',
+		data: {
+			labels: [{%for data in sc_data %}'{{data.name}}',{% endfor %}],
+			datasets: [{
+				label: '',
+				data: [{%for data in sc_data %}{{ data.size_total }}, {% endfor %}],
+				backgroundColor: backgroundColorList,
+				borderColor: borderColorList,
+				borderWidth: 1
+			}]
+		},
+		options: {
+			responsive: true,
+			plugins: {
+				legend: {
+					display: true,
+					position: 'bottom',
+				},
+				tooltip: {
+					callbacks: {
+						label: function(context) {
+							// console.log(context)
+							return formatBytes(context.parsed);
+						},
+						title: function(context) {
+							let title = context[0].label;
+							return title;
+						}
+					}
+				}      
+			}
+		}
+	});  
+
+
+</script>
+
+{% endblock %}

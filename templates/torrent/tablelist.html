@@ -1,0 +1,56 @@
+{% extends "base_generic.html" %}
+{% load static %}
+{% block stylesheet %}
+<link href="{% static 'ajax_datatable/css/style.css' %}" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">  
+{% endblock %}
+
+
+
+{% block content %}
+
+<div class="table-responsive my-3">
+    <table id="datatable"  width="100%" class="table display cell-border">
+    </table>
+</div>
+
+{% endblock %}
+
+
+{% block script%}
+<!-- <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script> -->
+<script type="text/javascript" src="{% static 'ajax_datatable/js/utils.js' %}"></script>    
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
+
+<script language="javascript">
+
+    $( document ).ready(function() {
+        AjaxDatatableViewUtils.init({
+            language: {
+                "info": "第 _START_ - _END_ 条 / 总 _TOTAL_ 条",
+                "lengthMenu": "每页显示  _MENU_ 条",
+                "search": "查找: ",
+				"zeroRecords": "现在这里空空的",
+				"infoEmpty": "没什么可说的",
+                "paginate": {
+                    'previous': '前一页',
+                    'next': '后一页'
+                }
+            }
+        });
+        AjaxDatatableViewUtils.initialize_table(
+            $('#datatable'),
+            "{% url 'tor_table' %}",
+            {
+                // extra_options (example)
+                processing: false,
+                autoWidth: true,
+                full_row_select: false,
+                scrollX: true             
+            },
+            );
+    });
+
+</script>
+    
+{% endblock %}

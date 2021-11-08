@@ -1,0 +1,53 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+
+<div class="row">
+    <span class="ml-3 mt-4 mr-auto" ><h4>下载器设置</h4></span>  
+    <a href="{% url 'sc_loadtorrents' %}" class="btn  btn-outline-primary mr-3 my-3 ">导入数据</a>
+    <a href="{% url 'sc_create' %}" class="btn btn-outline-success mr-3 my-3 ">添加下载器</a>
+</div>
+
+
+<div id="list_contents">
+	{% include 'seedclient/sclist.html' %}
+</div>
+  {% if is_paginated %}
+  {% include "_pagination2.html" %}
+  {% endif %}
+  
+{% endblock %}
+
+
+{% block script%}
+<script type="text/javascript">
+  function startCheck(id) {
+    $.ajax({
+      type: "GET",
+      url: "{% url 'sc_connect_test' %}",
+      data: { 'id': id }
+        })
+        .done(function (response) {
+        $('#list_contents').html(response);
+      });
+    }
+  </script>
+
+<script>
+  $(document).ready(function () {
+    {% if refresh %}
+    var append_increment = 0;
+    setInterval(function () {
+      $.ajax({
+        type: "GET",
+        url: "{% url 'sc_update_list' %}",
+          })
+    .done(function (response) {
+      $('#list_contents').html(response);
+      append_increment += 10;
+    });
+      }, 1000)
+    {% endif %}
+  })
+</script>  
+{% endblock %}

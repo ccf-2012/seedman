@@ -1,0 +1,41 @@
+{% extends "base_generic.html" %}
+{% load static %}
+{% block stylesheet %}
+<link href="{% static 'ajax_datatable/css/style.css' %}" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">
+{% endblock %}
+
+{% block content %}
+
+<div class="row my-3 justify-content-center">
+    <div class="col-sm-6">
+        <div class="card ">
+            <div class="card-body">
+                <h5 class="card-title">第一步：选择下载器</h5>
+                <h6 class="card-subtitle mb-2 text-muted">这里一共有3步</h6>
+
+                <p class="card-text">从选择下载器开始，通过下载器搬动数据的到分类的位置</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row my-3 justify-content-center">
+    <div class="col-sm-8">
+
+                <form method='post'>
+                    {% csrf_token %}
+
+                    <div id="list_contents">
+                        {% include 'categorize/sclist.html' %}
+                    </div>
+                    <!-- <input type='submit' class="btn btn-primary" value='下一步'> -->
+                </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script%}
+
+{% endblock %}

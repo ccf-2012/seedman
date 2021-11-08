@@ -1,0 +1,41 @@
+{% extends "base_generic.html" %}
+{% load static %}
+{% block stylesheet %}
+<link href="{% static 'ajax_datatable/css/style.css' %}" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">
+{% endblock %}
+
+{% block content %}
+
+
+<div class="row my-3 justify-content-center">
+    <div class="col-sm-6">
+        <div class="card ">
+            <div class="card-body">
+                <h5 class="card-title">第二步：选择要分类的目录</h5>
+                <h6 class="card-subtitle mb-2 text-muted">选择的下载器：{{ scname }}</h6>
+
+                <p class="card-text">有些目录已经有特定的用途，未选中的目录中的数据不会被搬移</p>
+                <!-- <a href="{% url 'cat_step0' %}" class="btn btn-primary">开始</a> -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row my-3 justify-content-center">
+    <div class="col-sm-8 ">
+
+                <form method='post'>
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <input type='submit' class="btn btn-primary" value='下一步'>
+                </form>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block script%}
+
+{% endblock %}

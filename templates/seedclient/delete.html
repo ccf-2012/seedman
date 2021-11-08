@@ -1,0 +1,17 @@
+{% extends "base_generic.html" %}
+{% block content %}
+<div class="row">
+    <div class="card-body">
+        <h4 class="card-title">删除下载器 : {{object.name}}</h4>
+        <h6 class="card-subtitle mb-2 text-muted">{{object.host}} : {{object.port}}</h6>
+        <form method="post">
+            {% csrf_token %}
+            <div class="alert alert-warning" role="alert">
+                确认删除吗： <strong>{{ object }}</strong> ?
+            </div>
+            <a class="btn btn-outline-secondary" href="javascript:history.go(-1)">取消</a>
+            <button type="submit" class="btn btn-danger">确认删除</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

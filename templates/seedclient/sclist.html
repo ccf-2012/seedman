@@ -1,0 +1,59 @@
+{% if sclient_list %}
+<div>
+	<table class="table table-sm">
+		<thead class="thead-light">
+			<tr>
+				<th scope="col" style="width: 7%;">状态</th>
+				<th scope="col" style="width: 7%;">类型</th>
+				<th scope="col" style="width: 14%;">名称</th>
+				<th scope="col" style="width: 16%;">主机</th>
+				<th scope="col" style="width: 9%;">端口</th>
+				<th scope="col" style="width: 13%;">用户名</th>
+				<th scope="col" style="width: 13%;">存储根目录</th>
+				<th scope="col" style="text-align: center;width: 10%;">修改</th>
+				<th scope="col" style="text-align: center;width: 10%;">删除</th>
+				<!-- <th scope="col" style="text-align: center;width: 14%;">测试</th> -->
+			</tr>
+		</thead>
+		<tbody id="_updateBody">
+			{% for item in sclient_list %}
+			<tr>
+				<td scope="col"> 
+					{% if item.online == 4 %} 
+						<span class="badge badge-pill badge-success">Loaded</span> 
+					{% elif item.online == 3 %} 
+						<span class="badge badge-pill badge-info">connected</span> 
+					{% elif item.online == 2 %} 
+						<span class="badge badge-pill badge-warning">Loading</span> 
+					{% elif item.online == 1 %} 
+						<span class="badge badge-pill badge-danger">Failed</span> 
+					{% else %} 
+						<span class="badge badge-pill badge-secondary">waiting</span> 
+					{% endif %}
+				</td>
+
+				<td scope="col"> {{ item.clienttype }} </td>
+				<td scope="col"> {{ item.name }} </td>
+				<td scope="col"> {{ item.host }} </td>
+				<td scope="col"> {{ item.port }} </td>
+				<td scope="col"> {{ item.username }} </td>
+				<td scope="col"> {{ item.root_dir }} </td>
+				<td scope="col" style="text-align: center">
+					<a href="{% url 'sc_update' item.seedclient_id %}" class="btn btn-outline-primary ">修改</a>
+				</td>
+				<td scope="col" style="text-align: center">
+					<a href="{% url 'sc_delete' item.seedclient_id %}" class="btn btn-outline-primary ">删除</a>
+				</td>
+				<!-- <td scope="col" style="text-align: center">
+					<button onclick="startCheck({{item.seedclient_id}})" type="button"
+						class="btn btn-outline-primary ">测试连接</button>
+				</td> -->
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</div>
+
+{% else %}
+<p>空空如也.</p>
+{% endif %}
