@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-@r8#a$%f!pe*$fo47-l51y+39ypv-f+jfthi*ml(=vfe@sa0hk
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -88,7 +88,7 @@ WSGI_APPLICATION = 'seedman.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR /  'db/db.sqlite3',
     }
 }
 
