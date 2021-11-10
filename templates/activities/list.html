@@ -1,0 +1,38 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+
+<div class="row">
+    <span class="ml-3 mt-4 mr-auto" ><h4>活跃种子</h4></span>  
+    <a href="#" class="btn  btn-outline-primary mr-3 my-3 ">刷新</a>
+    <a href="{% url 'sc_create' %}" class="btn btn-outline-success mr-3 my-3 ">测试</a>
+</div>
+
+
+<div id="list_contents">
+  {% include 'activities/tor_list.html' %}
+</div>
+  
+{% endblock %}
+
+
+{% block script%}
+
+
+<script>
+  $(document).ready(function () {
+
+    {% if refresh %}
+    setInterval(function () {
+      $.ajax({
+        type: "GET",
+        url: "{% url 'activetor_update_list' %}",
+          })
+    .done(function (response) {
+      $('#list_contents').html(response);
+    });
+      }, 2000)
+    {% endif %}
+  })
+</script>  
+{% endblock %}

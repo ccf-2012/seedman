@@ -60,7 +60,7 @@ class categorizeTable(AjaxDatatableView):
         },
         {
             'name': 'exclude',
-            'visible': True,
+            'visible': False,
             'searchable': False,
             'title': '是否排除',
         },
@@ -78,10 +78,6 @@ class categorizeTable(AjaxDatatableView):
                 row['moveto'] = obj.sclient.root_dir + obj.guess_category.label
             else:
                 row['moveto'] = obj.sclient.root_dir + '/' + obj.guess_category.label
-            if obj.location_category.exclude:
-                row['exclude'] = '排除'
-            else:
-                row['exclude'] = ''
         else:
             row['moveto'] = ''
         return

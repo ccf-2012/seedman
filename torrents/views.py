@@ -109,8 +109,15 @@ class TableView(AjaxDatatableView):
         },
         {
             'name': 'hash',
-            'visible': True,
+            'visible': False,
             'title': 'hash',
+            'searchable': False,
+            'orderable' : False,
+        },
+        {
+            'name': 'status',
+            'visible': True,
+            'title': '状态',
             'searchable': False,
             'orderable' : False,
         },

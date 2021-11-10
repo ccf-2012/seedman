@@ -93,7 +93,6 @@ class TrackerCategory(models.Model):
     class Meta:
         db_table = 'tracker_category'
 
-
 class Torrent(models.Model):
     torrent_id = models.BigAutoField(primary_key=True)
     sclient = models.ForeignKey(SeedClientSetting, on_delete=models.CASCADE)

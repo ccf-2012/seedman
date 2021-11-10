@@ -1,0 +1,47 @@
+{% if active_list_list %}
+<div>
+	{% for one_list in active_list_list %}
+	<div class="row  justify-content-between">
+		<div class="col-1 ">
+			<span class="badge badge-info">{{ one_list.scname }}</span>
+		</div>
+		<div class="col-4 align-bottom text-right">
+			<small>{{ one_list.sumstr }}</small>
+		</div>
+	  </div>
+
+	
+	<table  class="table table-sm table-bordered table-striped table-condensed" id="example" >
+		<thead class="thead-light">
+			<tr>
+				<th scope="col" style="width: 5%;">状态</th>
+				<th scope="col" style="width: 24%;">名字</th>
+				<th scope="col" style="width: 6%;">大小</th>
+				<th scope="col" style="width: 6%;">进度</th>
+				<th scope="col" style="width: 8%;">上传速度</th>
+				<th scope="col" style="width: 8%;">下载速度</th>
+				<th scope="col" style="width: 10%;">站点</th>
+				<th scope="col" style="width: 12%;">加入时间</th>
+			</tr>
+		</thead>
+		<tbody id="_updateBody">
+			{% for item in one_list.atlist %}
+			<tr>
+				<td scope="col"> {{ item.status }} </td>
+				<td scope="col"> {{ item.name }} </td>
+				<td scope="col"> {{ item.sizeStr }} </td>
+				<td scope="col"> {{ item.progress }} </td>
+				<td scope="col"> {{ item.uploadspeedStr }} </td>
+				<td scope="col"> {{ item.downloadspeedStr }} </td>
+				<td scope="col"> {{ item.tracker }} </td>
+				<td scope="col"> {{ item.added_date }} </td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	{% endfor %}
+</div>
+
+{% else %}
+<p>现在这里空空的.</p>
+{% endif %}

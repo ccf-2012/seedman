@@ -26,6 +26,7 @@ from seedclient import views as scview
 from torrents import views as torview
 from summary import views as sumview
 from categorize import views as catview
+from activities import views as actview
 
 
 urlpatterns = [
@@ -74,6 +75,13 @@ urlpatterns += [
     # path('torrent/index2/', torview.ZeroConfigurationDatatableView.as_view(), name='tor_index2'),
     path('torrent/index/', torview.torrentIndex, name='tor_index'),
     path('ajax_datatable/torrent', torview.TableView.as_view(), name='tor_table'),
+]
+
+urlpatterns += [
+    path('activities/list', actview.activeList, name='active_list'),
+    path('activities/listupdate', actview.ajaxRefreshActiveList, name='activetor_update_list'),
+    path('activities/actortableindex', actview.actorTableIndex, name='actor_table_index'),
+    path('activities/actortableajax', actview.actorTableAjax, name='actor_table_ajax'),
 ]
 
 urlpatterns += [
