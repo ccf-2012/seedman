@@ -8,7 +8,6 @@ from abc import abstractmethod, ABCMeta
 from datetime import datetime
 from django.utils import timezone
 import pytz
-from linetimer import CodeTimer
 from .humanbytes import HumanBytes
 
 def getSeedClientObj(scsetting):
