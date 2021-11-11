@@ -40,6 +40,7 @@ class GuessCategoryUtils:
     }
 
     category = ''
+    group = ''
     CategorySummary = []
 
     def setCategory(category):
@@ -153,26 +154,26 @@ class GuessCategoryUtils:
 
     @staticmethod
     def guessByName(torName):
+        GuessCategoryUtils.group = GuessCategoryUtils.parseGroup(torName)
         if GuessCategoryUtils.categoryByExt(torName):
-            return GuessCategoryUtils.category
+            return GuessCategoryUtils.category, GuessCategoryUtils.group
 
         info = PTN.parse(torName)
         if GuessCategoryUtils.categoryTvByName(torName, info):
-            return GuessCategoryUtils.category
-        group = GuessCategoryUtils.parseGroup(torName)
-        if GuessCategoryUtils.categoryByGroup(group):
-            return GuessCategoryUtils.category
+            return GuessCategoryUtils.category, GuessCategoryUtils.group
+        if GuessCategoryUtils.categoryByGroup(GuessCategoryUtils.group):
+            return GuessCategoryUtils.category, GuessCategoryUtils.group
 
         if GuessCategoryUtils.categoryByKeyword(torName):
-            return GuessCategoryUtils.category
+            return GuessCategoryUtils.category, GuessCategoryUtils.group
 
         # 非web组出的
         if GuessCategoryUtils.categoryByQuality(torName, info):
-            return GuessCategoryUtils.category
+            return GuessCategoryUtils.category, GuessCategoryUtils.group
         else:
             # Other的条件： TV/MV/Audio都匹配不上，quality没标记，各种压制组也对不上
             GuessCategoryUtils.setCategory('Other')
-            return GuessCategoryUtils.category
+            return GuessCategoryUtils.category, GuessCategoryUtils.group
 
     def getSummary():
         for cat in GuessCategoryUtils.CATEGORIES.keys():

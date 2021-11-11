@@ -1,3 +1,4 @@
+import re
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import render
@@ -108,6 +109,12 @@ class TableView(AjaxDatatableView):
             'orderable' : False,
         },
         {
+            'name': 'groupname',
+            'title': '组',
+            'choices': True,
+            'autofilter': True,
+        },
+        {
             'name': 'hash',
             'visible': False,
             'title': 'hash',
@@ -178,7 +185,19 @@ class TableView(AjaxDatatableView):
 
     def _get_search_link(self, obj):
         if obj.tracker in self.SEARCH_URL_PREFIX:
-            return self.SEARCH_URL_PREFIX[obj.tracker] + obj.name
+            sstr = obj.name
+            if obj.guess_category not in ['Audio', 'Music', 'eBook']:
+                match = re.search(r'^[\s\[ ]*(.*)[\. ]\d', obj.name, re.I)
+                if match:
+                    sstr = match.group(1).replace('.', ' ')
+                if obj.tracker in ['keepfrds', 'ourbits']:
+                    sstr = re.sub('[\u4e00-\u9fa5]', '', sstr)
+                # elif obj.tracker in ['springsunday']:
+                #     sstr = re.sub('[\u4e00-\u9fa5]', '', sstr)
+            dilimers = {'[':' ', ']':' ', '.':' ', 'Complete': ' '}
+            for original, replacement in dilimers.items():
+                sstr = sstr.replace(original, replacement)           
+            return self.SEARCH_URL_PREFIX[obj.tracker] + sstr
         else:
             return ''
 

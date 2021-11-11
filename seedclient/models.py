@@ -105,6 +105,7 @@ class Torrent(models.Model):
     origin_category = models.CharField(max_length=128)
     status = models.CharField(max_length=32)
     categorized = models.IntegerField(default=0)
+    groupname = models.CharField(max_length=32, default='', null=True, blank=True)
 
     guess_category = models.ForeignKey(GuessCategory,
                                        on_delete=models.SET_NULL,

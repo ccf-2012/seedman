@@ -116,7 +116,8 @@ class SeedClientBase(metaclass=ABCMeta):
         dbtor.addedDate = torAdded
         dbtor.status = torStatus
         dbtor.origin_category = torCategory
-        self.setDbTorGuessCat(dbtor, GuessCategoryUtils.guessByName(torName))
+        cat, dbtor.groupname = GuessCategoryUtils.guessByName(torName)
+        self.setDbTorGuessCat(dbtor, cat)
 
         if self.categorized(dbtor.sclient, dbtor.guess_category.label,
                             dbtor.location):
@@ -145,7 +146,7 @@ class SeedClientBase(metaclass=ABCMeta):
         return testDir
 
     def generateTargetDir(self, sclient, torName):
-        catDir = GuessCategoryUtils.guessByName(torName)
+        catDir, groupDir = GuessCategoryUtils.guessByName(torName)
         if catDir:
             targetDir = sclient.root_dir + catDir + '/'
             return targetDir
