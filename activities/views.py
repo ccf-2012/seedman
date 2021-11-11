@@ -1,5 +1,5 @@
 from django.http.response import JsonResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
 from seedclient.humanbytes import HumanBytes
 from seedclient.models import SeedClientSetting
@@ -15,7 +15,7 @@ class Activities:
         self.num = len(atlist)
         self.sumup = sum(ac.upload_speed for ac in atlist)
         self.sumdown = sum(ac.download_speed for ac in atlist)
-        self.sumstr = '%s 活跃， 总上传 %s/s  总下载 %s/s' % (
+        self.sumstr = '%s 活跃， 上传 %s/s  下载 %s/s' % (
             self.num, 
             HumanBytes.format(self.sumup, True), 
             HumanBytes.format(self.sumdown, True))
@@ -41,23 +41,41 @@ def getAllClientList():
         allClientList += atList
     return allClientList
 
+def getOneSclientList(sclient):
+    allClientList = []
+    atScname = sclient.name
+    client = SeedClientUtil.getSeedClientObj(sclient)
+    atList = client.loadActiveTorrent()
+    if atList:
+        atList.sort(key=lambda x: x.added_date, reverse=True)
+        allClientList.append(Activities(atScname, atList))
+    return allClientList
+
+
 
 @login_required
 def activeList(request):
     # allClientList = getAllClientListList()
     return render(request, 'activities/list.html', {
+        'sclient_list': SeedClientSetting.objects.all(), 
         'refresh': True
     })
 
-def ajaxRefreshActiveList(request):
+def ajaxRefreshActiveList(request, pk):
+    if pk <= 0:
+        return render(request, 'activities/tor_list.html', {'active_list_list':None,'refresh': False})
+
+    sclient = get_object_or_404(SeedClientSetting, pk=pk)
     return render(request, 'activities/tor_list.html', {
-        'active_list_list': getAllClientActivitiesList(),
+        'active_list_list': getOneSclientList(sclient),
         'refresh': False
     })
 
 
 def actorTableIndex(request):
-    return render(request, 'activities/tablelist.html')
+    return render(request, 'activities/tablelist.html', {
+        'sclient_list': SeedClientSetting.objects.all()
+    })
 
 
 def actorTableAjax(request):

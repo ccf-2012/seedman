@@ -327,6 +327,7 @@ class QbSeedClient(SeedClientBase):
                                               port=self.scsetting.port,
                                               username=self.scsetting.username,
                                               password=self.scsetting.password,
+                                            #   VERIFY_WEBUI_CERTIFICATE = False,
                                               )
         try:
             self.qbClient.auth_log_in()
