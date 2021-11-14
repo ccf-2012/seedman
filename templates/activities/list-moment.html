@@ -1,7 +1,7 @@
 {% extends "base_generic.html" %}
 {% block stylesheet %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 {% endblock %} 
 
 {% block content %}
@@ -26,10 +26,9 @@
   </div>
   <div class="col-10">
     <div classs="row">
-      {% if cur_sclient %}
-        {{ sumstr }}
-        <canvas id="myLineChart"></canvas>
-      {% endif %}
+      There is a chart here.
+      <canvas id="myLineChart"></canvas>
+
     </div>
     <div classs="row" id="list_contents">
       {% include 'activities/tor_list.html' %}
@@ -45,11 +44,11 @@
 
 <script>
 
-$(document).ready(function () {
 
   var data_id = 0;
   {% if cur_sclient %}
   data_id = {{ cur_sclient }};
+  {% endif %}
   (function worker() {
     $.ajax({
       url: '/activities/listupdate/' + data_id,
@@ -57,11 +56,11 @@ $(document).ready(function () {
         $('#list_contents').html(data);
       },
       complete: function () {
-        setTimeout(worker, 1000);
+        // Schedule the next request when the current one's complete
+        setTimeout(worker, 2000);
       }
     });
   })();
-  {% endif %}
 
 
   $('.list-group-item').on('click', function () {
@@ -75,9 +74,11 @@ $(document).ready(function () {
     // console.log(data_id);  
     window.location = '/activities/listselect/' + data_id;
   })
+
+  $(document).ready(function () {
     // setTimeout(worker, 1000);
     // worker();
-})
+  })
 
 </script>
 
@@ -87,80 +88,33 @@ var myChart1 = new Chart(linectx, {
   type: 'line',
   data: {
     labels: [{%for data in speed_list %} 
-              "{{data.time|date:'H:i' }}",
+              "{{data.time}}",
             {% endfor %}],
-    datasets: [
-      {
-        label: 'ALL',
-        data: [{%for data in speed_list %}{{ data.sum_upload_speed }}, {% endfor %}],
-        normalized: true,
-        fill: true,
-        indexAxis: "x",
-        backgroundColor: backgroundColorList,
-        borderColor: borderColorList,
-        pointRadius: 0,
-        borderWidth: 1
-      },
-      {% for sepsp in sepsp_list%}
-      {
-        label: '{{ sepsp.tracker }}',
-        data: [{%for data in sepsp.stlist %}{{ data.sum_upload_speed }}, {% endfor %}],
-        fill: false,
-        pointRadius: 0,
-        borderWidth: 1
-      },
-      {% endfor %}
-    ]
+    datasets: [{
+      label: '',
+      data: [{%for data in speed_list %}{{ data.sum_upload_speed }}, {% endfor %}],
+      normalized: true,
+      indexAxis: "x",
+      backgroundColor: backgroundColorList,
+      borderColor: borderColorList,
+      pointRadius: 0,
+      borderWidth: 1
+    }]
   },
   options: {
-    interaction: {
-      mode: "index",
-      axis: "x",
-      intersect: true
-    },
-    scales: {
-      x: {
-        ticks: {
-          source: "auto",
-          // maxRotation: 0,
-          autoSkip: true,
-          includeBounds: true,
-          major: {
-            enabled: true
-          }
-        }
-      },
-      y: {
-        ticks: {
-          callback: function(value, index, values) {
-            return formatBytes(value, 0);
-          }
+        scales: {
+          x: [{
+            type: 'time', 
+            time: {
+              unit: 'minute',
+            },
+          }]
+        },
+        title: {
+          display: true,
+          text: 'Temperature Sensor 1'
         }
       }
-    },
-
-    plugins: {
-      decimation: {
-        enabled: true,
-        algorithm: "lttb"
-      },
-      tooltip: {
-        callbacks: {
-          label: function(context) {
-            // console.log(context);  
-            return context.dataset.label + ': ' +formatBytes(context.parsed.y) + '/s';
-          }
-        },
-        position: "nearest",
-        titleMarginBottom: 16,
-        bodySpacing: 8,
-        padding: 16
-      },
-      legend: {
-        display: false
-      },
-    }
-  }
 });
 
 
@@ -181,5 +135,8 @@ function removeData(chart) {
 }
 
 </script>	
+
+
+
 
 {% endblock %}

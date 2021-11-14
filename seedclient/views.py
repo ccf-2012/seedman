@@ -12,6 +12,7 @@ from .forms import SeedClientForm
 from .torguess import GuessCategoryUtils
 from seedclient import sclient as SeedClientUtil
 from background_task import background
+from activities.tasks import GetSpeedingTorrentRoutine, killBackgroupTasks, checkTaskExists
 
 
 def initAllCategories():
@@ -90,8 +91,13 @@ def sclientConnectionTest(request):
 
 @login_required
 def loadSclientTorrents(request):
-    backgroundLoadSeedClientToDatabase(schedule=0)
+    vname = "task_loadtorrent"
+    if not checkTaskExists(vname):
+        backgroundLoadSeedClientToDatabase(schedule=0, verbose_name=vname)
     # loadSeedClientToDatabase.now()
+    vname = "task_speeding_torrent"
+    if not checkTaskExists(vname):
+        GetSpeedingTorrentRoutine(repeat=300, verbose_name=vname)
     sclientList = SeedClientSetting.objects.all()
     for sc in sclientList:
         sc.online = 0  # waiting

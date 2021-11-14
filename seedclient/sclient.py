@@ -10,6 +10,7 @@ from django.utils import timezone
 import pytz
 from .humanbytes import HumanBytes
 
+
 def getSeedClientObj(scsetting):
     if scsetting.clienttype == 'qb':
         scobj = QbSeedClient(scsetting)
@@ -243,95 +244,53 @@ class TrSeedClient(SeedClientBase):
         trTor.move_data(targetDir)
         trTor.locate_data(targetDir)
 
-    # def moveTorrentData(self, categorizeConfig):
-    #     trClient = self.connect()
-    #     if not trClient:
-    #         return -1
-    #     moveList = self.getMoveList()
-    #     categorizeConfig.totalTorrentNum = len(moveList)
-    #     categorizeConfig.currentProceedingNum = 0
-    #     for dbTor in moveList:
-    #         categorizeConfig.currentProceedingNum += 1
-    #         categorizeConfig.save()
-    #         trTor = trClient.get_torrent(dbTor.hash)
-    #         targetDir = self.generateTargetDir(self.scsetting, dbTor.name)
-    #         trTor.move_data(targetDir)
-    #         trTor.locate_data(targetDir)
-
-    #         dbTor.location = targetDir
-    #         self.categoryLocation(dbTor)
-    #         dbTor.categorized = 1
-    #         dbTor.save()
-
-    #     categorizeConfig.totalMovedNum = categorizeConfig.currentProceedingNum
-    #     categorizeConfig.save()
-    #     return categorizeConfig.currentProceedingNum
-
-    # def moveTorrentData2(self, categorizeConfig):
-    #     c = self.connect()
-    #     if not c:
-    #         return -1
-    #     torList = c.get_torrents(arguments=[
-    #         'id', 'name', 'downloadDir', 'totalSize', 'trackers', 'addedDate',
-    #         'status'
-    #     ])
-    #     countMoveTotal = 0
-    #     categorizeConfig.currentProceedingNum = 0
-    #     categorizeConfig.totalTorrentNum = len(torList)
-    #     locationExcludeList = self.getSavedExcludeList(categorizeConfig)
-    #     for trTor in torList:
-    #         categorizeConfig.currentProceedingNum += 1
-    #         curDir = self.getCurrentDir(trTor.download_dir)
-    #         if curDir not in locationExcludeList:
-    #             targetDir = self.generateTargetDir(categorizeConfig.sclient,
-    #                                             trTor.name)
-    #             if targetDir and (targetDir != curDir):
-    #                 countMoveTotal += 1
-    #                 trTor.move_data(targetDir)
-    #                 trTor.locate_data(targetDir)
-    #                 categorizeConfig.save()
-
-    #     categorizeConfig.totalMovedNum = countMoveTotal
-    #     categorizeConfig.save()
-    #     return countMoveTotal
-
     def loadActiveTorrent(self):
         trClient = self.connect()
         if not trClient:
-            return None
-        torList = trClient.get_torrents(ids='recently-active', arguments=[
-            'id', 'name', 'hashString', 'downloadDir', 'totalSize', 'trackers',
-            'addedDate', 'status', 'percentDone', 'seeders', 'leechers', 'rateUpload', 'rateDownload'
-        ])
+            return []
+        torList = trClient.get_torrents(
+            ids='recently-active',
+            arguments=[
+                'id', 'name', 'hashString', 'downloadDir', 'totalSize',
+                'trackers', 'addedDate', 'status', 'percentDone', 'seeders',
+                'leechers', 'rateUpload', 'rateDownload', 'uploadedEver',
+                'downloadedEver'
+            ])
         activeList = []
         for tor in torList:
-            at = ActiveTorrent(tor.hashString, 
-                self.scsetting.name, 
+            at = ActiveTorrent(
+                tor.hashString,
+                self.scsetting.name,
                 tor.name,
-                tor.total_size, 
-                tor.percentDone * 100, 
-                tor.rateUpload, 
+                tor.total_size,
+                tor.percentDone * 100,
+                tor.rateUpload,
                 tor.rateDownload,
-                tor.seeders, 
+                tor.seeders,
                 tor.leechers,
-                self.abbrevTracker(tor.trackers[0]), 
+                self.abbrevTracker(tor.trackers[0]),
                 tor.date_added,
                 tor.status,
-                tor.download_dir)
+                tor.download_dir,
+                tor.uploadedEver,
+                tor.downloadedEver,
+            )
             activeList.append(at)
         return activeList
 
+
 class QbSeedClient(SeedClientBase):
     def connect(self):
-        self.qbClient = qbittorrentapi.Client(host=self.scsetting.host,
-                                              port=self.scsetting.port,
-                                              username=self.scsetting.username,
-                                              password=self.scsetting.password,
-                                            #   VERIFY_WEBUI_CERTIFICATE = False,
-                                              )
+        self.qbClient = qbittorrentapi.Client(
+            host=self.scsetting.host,
+            port=self.scsetting.port,
+            username=self.scsetting.username,
+            password=self.scsetting.password,
+            #   VERIFY_WEBUI_CERTIFICATE = False,
+        )
         try:
             self.qbClient.auth_log_in()
-        except :
+        except:
             print('Error: check connection settings.')
             return None
 
@@ -349,11 +308,12 @@ class QbSeedClient(SeedClientBase):
         countSizeTotal = 0
         torList = qbClient.torrents_info()
         for tor in torList:
-            self.addDbTorrent(tor.name, tor.hash, tor.size, tor.save_path,
-                              self.abbrevTracker(tor.tracker),
-                              datetime.utcfromtimestamp(
-                                tor.added_on).replace(tzinfo=pytz.utc),
-                              tor.trackers[3]['status'], tor.category)
+            self.addDbTorrent(
+                tor.name, tor.hash, tor.size, tor.save_path,
+                self.abbrevTracker(tor.tracker),
+                datetime.utcfromtimestamp(
+                    tor.added_on).replace(tzinfo=pytz.utc),
+                tor.trackers[3]['status'], tor.category)
             countSizeTotal += tor.size
 
         self.scsetting.num_total = len(torList)
@@ -363,7 +323,7 @@ class QbSeedClient(SeedClientBase):
         return True
 
     def abbrevTracker(self, trackerstr):
-        hostnameList = urllib.parse.urlparse( trackerstr).netloc.split('.')
+        hostnameList = urllib.parse.urlparse(trackerstr).netloc.split('.')
         if len(hostnameList) == 2:
             abbrev = hostnameList[0]
         elif len(hostnameList) == 3:
@@ -383,51 +343,30 @@ class QbSeedClient(SeedClientBase):
     def loadActiveTorrent(self):
         qbClient = self.connect()
         if not qbClient:
-            return None
+            return []
         torList = qbClient.torrents_info(status_filter='active')
         activeList = []
         for tor in torList:
-            at = ActiveTorrent(tor.hash, 
-                self.scsetting.name, 
+            at = ActiveTorrent(
+                tor.hash,
+                self.scsetting.name,
                 tor.name,
-                tor.size, 
-                tor.progress * 100, 
+                tor.size,
+                tor.progress * 100,
                 tor.upspeed,
-                tor.dlspeed, 
-                tor.num_seeds, 
+                tor.dlspeed,
+                tor.num_seeds,
                 tor.num_leechs,
-                self.abbrevTracker(tor.tracker), 
+                self.abbrevTracker(tor.tracker),
                 datetime.utcfromtimestamp(
                     tor.added_on).replace(tzinfo=pytz.utc),
                 tor.state,
-                tor.save_path)
+                tor.save_path,
+                tor.total_uploaded,
+                tor.total_downloaded,
+            )
             activeList.append(at)
         return activeList
-
-    # def moveTorrentData(self, categorizeConfig):
-    #     qbClient = self.connect()
-    #     if not qbClient:
-    #         return -1
-    #     moveList = self.getMoveList()
-    #     categorizeConfig.totalTorrentNum = len(moveList)
-    #     categorizeConfig.currentProceedingNum = 0
-    #     for dbTor in moveList:
-    #         categorizeConfig.currentProceedingNum += 1
-    #         categorizeConfig.save()
-    #         targetDir = self.generateTargetDir(self.scsetting, dbTor.name)
-    #         qbList = qbClient.torrents_info(hashs=[dbTor.hash])
-    #         if len(qbList) > 0:
-    #             qbTor = qbList[0]
-    #             # qbTor.setCategory(GuessCategoryUtils.CATEGORIES[catstr][0])
-    #             # qbTor.setAutoManagement(True)
-    #             qbTor.setLocation(targetDir)
-    #             dbTor.location = targetDir
-    #             dbTor.categorized = 1
-    #             self.categoryLocation(dbTor)
-    #             dbTor.save()
-    #     categorizeConfig.totalMovedNum = categorizeConfig.currentProceedingNum
-    #     categorizeConfig.save()
-    #     return categorizeConfig.currentProceedingNum
 
 
 class DeSeedClient(SeedClientBase):
@@ -457,8 +396,13 @@ class DeSeedClient(SeedClientBase):
             self.scsetting.save()
             return False
         torList = client.call('core.get_torrents_status', {}, [
-            'name', 'hash', 'download_location', 'total_size', 'tracker_host',
-            'time_added', 'state'
+            'name',
+            'hash',
+            'download_location',
+            'total_size',
+            'tracker_host',
+            'time_added',
+            'state',
         ])
         countSizeTotal = 0
         for deTor in torList.values():
@@ -490,73 +434,53 @@ class DeSeedClient(SeedClientBase):
         return abbrev
 
     def callRPCMove(self, tor_hash, targetDir):
-        # r = self.deClient.call('core.get_torrents_status', {"hash": tor_hash},
-        #                     ['download_location', 'name'])
         self.deClient.call('core.move_storage', [tor_hash], targetDir)
-
-    # def moveTorrentData(self, categorizeConfig):
-    #     deClient = self.connect()
-    #     if not deClient:
-    #         return -1
-    #     moveList = self.getMoveList()
-    #     categorizeConfig.totalTorrentNum = len(moveList)
-    #     categorizeConfig.currentProceedingNum = 0
-    #     for dbTor in moveList:
-    #         categorizeConfig.currentProceedingNum += 1
-    #         categorizeConfig.save()
-    #         r = deClient.call('core.get_torrents_status', {"hash": dbTor.hash},
-    #                           ['download_location', 'name'])
-    #         targetDir = self.generateTargetDir(categorizeConfig.sclient,
-    #                                         dbTor.name)
-
-    #         deClient.call('core.move_storage', [dbTor.hash], targetDir)
-
-    #         dbTor.location = targetDir
-    #         dbTor.categorized = 1
-    #         self.categoryLocation(dbTor)
-    #         dbTor.save()
-
-    #     categorizeConfig.totalMovedNum = categorizeConfig.currentProceedingNum
-    #     categorizeConfig.save()
-    #     return categorizeConfig.currentProceedingNum
 
     def loadActiveTorrent(self):
         client = self.connect()
         if not client:
-            return None
-        torList = client.call('core.get_torrents_status', {"state": "Active"}, [
-            'name', 'hash', 'download_location', 'total_size', 'tracker_host',
-            'time_added', 'state', 'progress', 'num_seeds', 'num_peers', 'peers', 
-        ])
+            return []
+        torList = client.call(
+            'core.get_torrents_status', {"state": "Active"}, [
+                'name', 'hash', 'download_location', 'total_size',
+                'tracker_host', 'time_added', 'state', 'progress', 'num_seeds',
+                'num_peers', 'peers', 'total_uploaded', 'total_done'
+            ])
         activeList = []
         for deTor in torList.values():
             upspeed = 0
             downspeed = 0
-            if (len(deTor[b'peers'])>0):
+            if (len(deTor[b'peers']) > 0):
                 for p in deTor[b'peers']:
                     upspeed += p[b'up_speed']
                     downspeed += p[b'down_speed']
             at = ActiveTorrent(
-                deTor[b'hash'].decode("utf-8"), 
+                deTor[b'hash'].decode("utf-8"),
                 self.scsetting.name,
-                deTor[b'name'].decode("utf-8"), 
+                deTor[b'name'].decode("utf-8"),
                 deTor[b'total_size'],
-                deTor[b'progress'], 
-                upspeed, 
+                deTor[b'progress'],
+                upspeed,
                 downspeed,
-                deTor[b'num_seeds'], 
+                deTor[b'num_seeds'],
                 deTor[b'num_peers'],
                 self.abbrevTracker(deTor[b'tracker_host'].decode("utf-8")),
                 datetime.utcfromtimestamp(
                     deTor[b'time_added']).replace(tzinfo=pytz.utc),
                 deTor[b'state'].decode("utf-8"),
-                deTor[b'download_location'].decode("utf-8"))
+                deTor[b'download_location'].decode("utf-8"),
+                deTor[b'total_uploaded'],
+                deTor[b'total_done'],
+            )
             activeList.append(at)
         return activeList
 
 
 class ActiveTorrent(object):
-    def __init__(self, torrent_hash, scname, name, size, progress, upload_speed, download_speed, seeder_num, leech_num, tracker, added_date, status, save_path):
+    def __init__(self, torrent_hash, scname, name, size, progress,
+                 upload_speed, download_speed, seeder_num, leech_num, tracker,
+                 added_date, status, save_path, total_uploaded,
+                 total_downloaded):
         self.torrent_hash = torrent_hash
         self.scname = scname
         self.name = name
@@ -564,12 +488,28 @@ class ActiveTorrent(object):
         self.sizeStr = HumanBytes.format(size, True)
         self.progress = "{:.0f}%".format(progress)
         self.upload_speed = upload_speed
-        self.uploadspeedStr = HumanBytes.format(upload_speed, True) if upload_speed > 0 else ''
+        self.uploadspeedStr = HumanBytes.format(
+            upload_speed, True) if upload_speed > 0 else ''
         self.download_speed = download_speed
-        self.downloadspeedStr =  HumanBytes.format(download_speed, True) if download_speed > 0 else ''
+        self.downloadspeedStr = HumanBytes.format(
+            download_speed, True) if download_speed > 0 else ''
         self.seeder_num = seeder_num
         self.leech_num = leech_num
         self.tracker = tracker
         self.added_date = added_date
         self.status = status
         self.save_path = save_path
+        self.total_uploaded = total_uploaded
+        self.total_downloaded = total_downloaded
+
+class Activities:
+    def __init__(self, scname, atlist):
+        self.scname = scname
+        self.atlist = atlist
+        self.num = len(atlist)
+        self.sumup = sum(ac.upload_speed for ac in atlist)
+        self.sumdown = sum(ac.download_speed for ac in atlist)
+        self.sumstr = '%s 活跃， 上传 %s/s  下载 %s/s' % (
+            self.num, HumanBytes.format(
+                self.sumup, True), HumanBytes.format(self.sumdown, True))
+

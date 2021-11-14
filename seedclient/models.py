@@ -142,3 +142,33 @@ class CategorizeStep(models.Model):
     totalTorrentNum = models.IntegerField(default=0)
     currentProceedingNum  = models.IntegerField(default=0)
     totalMovedNum = models.IntegerField(default=0)
+
+
+class SpeedingTorrent(models.Model):
+    torrent_id = models.BigAutoField(primary_key=True)
+    sclient = models.ForeignKey(SeedClientSetting, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255, default='')
+    size = models.BigIntegerField(default=0)
+    hash = models.CharField(max_length=255, default='')
+    tracker = models.CharField(max_length=128, null=True)
+    addedDate = models.DateTimeField(default=0, blank=True)
+    status = models.CharField(max_length=32, null=True)
+
+    last_uploaded = models.BigIntegerField(default=0)    
+    delta_uploaded = models.BigIntegerField(default=0)
+    last_downloaded = models.BigIntegerField(default=0)
+    delta_downloaded = models.BigIntegerField(default=0)
+    cur_progress = models.FloatField(default=0)
+
+    ttl = models.IntegerField(default=0)
+
+
+class SpeedPoint(models.Model):
+    speedpoint_id = models.BigAutoField(primary_key=True)
+    sclient = models.ForeignKey(SeedClientSetting, on_delete=models.CASCADE)
+    tracker = models.CharField(max_length=128, null=True)
+    time = models.DateTimeField(auto_now_add=True)
+    sum_delta_upload = models.BigIntegerField(default=0)
+    sum_delta_download = models.BigIntegerField(default=0)
+    sum_upload_speed = models.FloatField(default=0)
+    sum_download_speed = models.FloatField(default=0)

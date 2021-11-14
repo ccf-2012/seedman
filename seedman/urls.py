@@ -80,8 +80,10 @@ urlpatterns += [
 urlpatterns += [
     path('activities/list', actview.activeList, name='active_list'),
     path('activities/listupdate/<int:pk>', actview.ajaxRefreshActiveList, name='activetor_update_list'),
-    path('activities/actortableindex', actview.actorTableIndex, name='actor_table_index'),
-    path('activities/actortableajax', actview.actorTableAjax, name='actor_table_ajax'),
+    path('activities/listselect/<int:pk>', actview.activeListSelect, name='active_list_select'),
+    path('activities/starttask', actview.startSpeedingTorrentTask, name='active_speed_taks'),
+    # path('activities/actortableindex', actview.actorTableIndex, name='actor_table_index'),
+    # path('activities/actortableajax', actview.actorTableAjax, name='actor_table_ajax'),
 ]
 
 urlpatterns += [

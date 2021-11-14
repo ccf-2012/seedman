@@ -125,8 +125,8 @@ class TableView(AjaxDatatableView):
             'name': 'status',
             'visible': True,
             'title': '状态',
-            'searchable': False,
-            'orderable' : False,
+            'choices': True,
+            'autofilter': True,
         },
     ]
 
