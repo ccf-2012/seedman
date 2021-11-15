@@ -5,8 +5,6 @@ from seedclient.humanbytes import HumanBytes
 from seedclient.models import GuessCategory, LocationCategory, SeedClientSetting, Torrent, TrackerCategory
 from ajax_datatable.views import AjaxDatatableView
 
-from seedclient.views import initAllCategories
-
 
 class summaryCatTable(AjaxDatatableView):
     model = GuessCategory

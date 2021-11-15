@@ -29,8 +29,6 @@ def getAllClientActivitiesList():
 
 
 def getOneSclientList(sclient):
-    # GetSpeedingTorrentRoutine()
-
     allClientList = []
     atScname = sclient.name
     client = SeedClientUtil.getSeedClientObj(sclient)
@@ -63,13 +61,13 @@ def activeListSelect(request, pk):
                               for sp in splistAll), True),
     )
 
-    trackerDistinctList = SpeedingTorrent.objects.filter(
-        sclient=sclient).values('tracker').distinct()
+    trackerDistinctList = SpeedPoint.objects.exclude(tracker='ALL').filter(
+        sclient=sclient, time__gte=timeRange).values('tracker').distinct()
     sepspList = []
     for tr in trackerDistinctList:
         sepsp = SpeedPoint.objects.filter(sclient=sclient,
-                                          tracker=tr["tracker"],
-                                          time__gte=timeRange)
+                                        tracker=tr["tracker"],
+                                        time__gte=timeRange)
         tsepsp = SpeedTrend(tr["tracker"], sepsp)
         sepspList.append(tsepsp)
 
@@ -103,7 +101,7 @@ def startSpeedingTorrentTask(request):
     # allClientList = getAllClientListList()
     vname = "task_speeding_torrent"
     if not checkTaskExists(vname):
-        GetSpeedingTorrentRoutine(repeat=60, verbose_name=vname)
+        GetSpeedingTorrentRoutine(repeat=300, verbose_name=vname)
     return JsonResponse({'Start': '60'})
 
 

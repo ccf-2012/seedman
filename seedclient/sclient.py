@@ -120,11 +120,11 @@ class SeedClientBase(metaclass=ABCMeta):
         cat, dbtor.groupname = GuessCategoryUtils.guessByName(torName)
         self.setDbTorGuessCat(dbtor, cat)
 
-        if self.categorized(dbtor.sclient, dbtor.guess_category.label,
-                            dbtor.location):
-            dbtor.categorized = 1
-        else:
-            dbtor.categorized = 0
+        # if self.categorized(dbtor.sclient, dbtor.guess_category.label,
+        #                     dbtor.location):
+        #     dbtor.categorized = 1
+        # else:
+        #     dbtor.categorized = 0
 
         self.categoryLocation(dbtor)
         self.categoryTracker(dbtor)

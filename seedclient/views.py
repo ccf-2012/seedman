@@ -6,13 +6,14 @@ from django.views.generic.edit import CreateView
 from django.views.generic.edit import DeleteView
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
-from .models import SeedClientSetting, Torrent, GuessCategory, LocationCategory, TrackerCategory
+from .models import SeedClientSetting, SpeedPoint, Torrent, GuessCategory, LocationCategory, TrackerCategory, SpeedingTorrent
 from .forms import SeedClientForm
 
 from .torguess import GuessCategoryUtils
 from seedclient import sclient as SeedClientUtil
 from background_task import background
-from activities.tasks import GetSpeedingTorrentRoutine, killBackgroupTasks, checkTaskExists
+from activities.tasks import GetSpeedingTorrentRoutine, checkTaskExists
+from background_task.models import Task
 
 
 def initAllCategories():
@@ -28,6 +29,13 @@ def initAllCategories():
         gc.size = 0
         gc.save()
 
+def initSpeedingTables():
+    SpeedingTorrent.objects.all().delete()
+    SpeedPoint.objects.all().delete()
+
+
+def killAllBackgroupTasks():
+    Task.objects.all().delete()
 
 def removeEmptyCategories():
     GuessCategory.objects.filter(count=0).delete()
@@ -95,8 +103,10 @@ def loadSclientTorrents(request):
     if not checkTaskExists(vname):
         backgroundLoadSeedClientToDatabase(schedule=0, verbose_name=vname)
     # loadSeedClientToDatabase.now()
+
     vname = "task_speeding_torrent"
     if not checkTaskExists(vname):
+        initSpeedingTables()
         GetSpeedingTorrentRoutine(repeat=300, verbose_name=vname)
     sclientList = SeedClientSetting.objects.all()
     for sc in sclientList:

@@ -105,6 +105,8 @@ var myChart1 = new Chart(linectx, {
       {
         label: '{{ sepsp.tracker }}',
         data: [{%for data in sepsp.stlist %}{{ data.sum_upload_speed }}, {% endfor %}],
+        backgroundColor: backgroundColorList,
+        borderColor: borderColorList,
         fill: false,
         pointRadius: 0,
         borderWidth: 1
@@ -133,7 +135,7 @@ var myChart1 = new Chart(linectx, {
       y: {
         ticks: {
           callback: function(value, index, values) {
-            return formatBytes(value, 0);
+            return formatBytes(value, 0) + '/s';
           }
         }
       }

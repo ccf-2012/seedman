@@ -4,8 +4,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from ajax_datatable.views import AjaxDatatableView
 from seedclient.models import Torrent, LocationCategory, SeedClientSetting, CategorizeStep
 from .forms import CategoryExcludeForm
-from seedclient import sclient as SeedClientUtil
-from background_task import background
+from .tasks import backgroundProceedCategorize
+from activities.tasks import checkTaskExists
 
 
 class categorizeTable(AjaxDatatableView):
@@ -87,7 +87,6 @@ class categorizeTable(AjaxDatatableView):
         if len(csList) > 0:
             cs = csList[0]
         queryset = self.model.objects.filter(sclient__name=cs.sclient.name,
-                                             categorized=0,
                                              location_category__exclude=False)
         return queryset
 
@@ -158,22 +157,15 @@ def categorizeStep2(request):
         'dir_notexclude': dir_noex
     })
 
-
-@background(schedule=0)
-def backgroundProceedCategorize():
-    csList = CategorizeStep.objects.all()
-    if len(csList) > 0:
-        catconfig = csList[0]
-        c = SeedClientUtil.getSeedClientObj(catconfig.sclient)
-        c.moveTorrentData(catconfig)
-
-
 @login_required
 def categorizeProceed(request):
     csList = CategorizeStep.objects.all()
     if len(csList) <= 0:
         return redirect('cat_step0')
-    backgroundProceedCategorize(schedule=0)
+
+    vname = "proceed_categorize"
+    if not checkTaskExists(vname):
+        backgroundProceedCategorize(schedule=0, verbose_name=vname)
     return render(request, 'categorize/step3.html', {
         'cat_progress': 0,
         'refresh': True

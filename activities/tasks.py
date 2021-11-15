@@ -29,18 +29,17 @@ def torrentMarkSpeed(at, sc):
                                delta_downloaded=0,
                                ttl=1024)
     stor.save()
-    SpeedingTorrent.objects.all().update(ttl=F("ttl") - 1)
-    SpeedingTorrent.objects.filter(ttl__lte=0).delete()
 
 
 def addSpeedPoint(stors, sps, sc, trk):
+    currTime = timezone.now()
     if len(sps) > 0:
         lastsp = sps.latest('time')
-        interval = (timezone.now() - lastsp.time).total_seconds()
+        deltaTime = (currTime - lastsp.time).total_seconds()
         sumDeltaUpload = sum(st.delta_uploaded for st in stors)
-        sumUploadSpeed = sumDeltaUpload / interval
-        sumDeltaDownload = sum(st.delta_downloaded for st in stors) 
-        sumDownloadSpeed = sumDeltaDownload / interval
+        sumUploadSpeed = sumDeltaUpload / deltaTime
+        sumDeltaDownload = sum(st.delta_downloaded for st in stors)
+        sumDownloadSpeed = sumDeltaDownload / deltaTime
     else:
         sumDeltaUpload = 0
         sumDeltaDownload = 0
@@ -49,7 +48,7 @@ def addSpeedPoint(stors, sps, sc, trk):
 
     sp = SpeedPoint(sclient=sc,
                     tracker=trk,
-                    time=timezone.now(),
+                    time=currTime,
                     sum_delta_upload=sumDeltaUpload,
                     sum_delta_download=sumDeltaDownload,
                     sum_upload_speed=sumUploadSpeed,
@@ -59,7 +58,7 @@ def addSpeedPoint(stors, sps, sc, trk):
 
 def sclientMarkSpeedPoint(sc):
     stors = SpeedingTorrent.objects.filter(sclient=sc)
-    sps = SpeedPoint.objects.filter(sclient=sc)
+    sps = SpeedPoint.objects.filter(sclient=sc, tracker='ALL')
     addSpeedPoint(stors, sps, sc, 'ALL')
 
     trackerDistinctList = SpeedingTorrent.objects.filter(sclient=sc).values('tracker').distinct()
@@ -72,26 +71,20 @@ def sclientMarkSpeedPoint(sc):
 
 @background(schedule=60)
 def GetSpeedingTorrentRoutine():
-    allClientList = []
-    for sc in SeedClientSetting.objects.all():
-        atScname = sc.name
+    for sc in SeedClientSetting.objects.all():        # atScname = sc.name
         client = SeedClientUtil.getSeedClientObj(sc)
         atList = client.loadActiveTorrent()
-        if atList:
-            for at in atList:
-                torrentMarkSpeed(at, sc)
-            sclientMarkSpeedPoint(sc)
+        for at in atList:
+            torrentMarkSpeed(at, sc)
 
-            atList.sort(key=lambda x: x.added_date, reverse=True)
-            allClientList.append(Activities(atScname, atList))
-    return allClientList
+        sclientMarkSpeedPoint(sc)
+
+    SpeedingTorrent.objects.all().update(ttl=F("ttl") - 1)
+    SpeedingTorrent.objects.filter(ttl__lte=0).delete()
+
 
 
 def checkTaskExists(task_vname):
     tasks = Task.objects.filter(verbose_name=task_vname)
     return len(tasks) > 0
 
-def killBackgroupTasks(task_vname):
-    background_tasks = Task.objects.filter(verbose_name=task_vname)
-    for background_task in background_tasks:
-        background_task.delete()
