@@ -177,15 +177,26 @@ class TableView(AjaxDatatableView):
         'hdhome': 'https://hdhome.org/torrents.php?search=',
         'lemonhd': 'https://lemonhd.org/torrents.php?search=',
         'hdtime': 'https://hdtime.org/torrents.php?search=',
-        'iptorrents': 'https://iptorrents.com/t?q=',
+        'stackoverflow': 'https://iptorrents.com/t?q=',
+        'empirehost': 'https://iptorrents.com/t?q=',
+        'bgp': 'https://iptorrents.com/t?q=',
         'torrentleech':
         'https://www.torrentleech.org/torrents/browse/index/query/',
+        'tleechreload':
+        'https://www.torrentleech.org/torrents/browse/index/query/',
         'blutopia': 'https://blutopia.xyz/torrents?name=',
+        'avistaz': 'https://avistaz.to/torrents?search=',
+        'filelist': 'https://filelist.io/browse.php?search=',
+        'flro': 'https://filelist.io/browse.php?search=',
+        'gazellegames': 'https://gazellegames.net/torrents.php?searchstr=',
+        'dicmusic': 'https://dicmusic.club/torrents.php?searchstr=',
     }
 
     def _get_search_link(self, obj):
         if obj.tracker in self.SEARCH_URL_PREFIX:
             sstr = obj.name
+            if sstr.endswith('.mkv'):
+                sstr = sstr.replace('.mkv', '')
             if obj.guess_category not in ['Audio', 'Music', 'eBook']:
                 match = re.search(r'^[\s\[ ]*(.*)[\. ]\d', obj.name, re.I)
                 if match:

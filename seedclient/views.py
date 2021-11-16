@@ -99,15 +99,14 @@ def sclientConnectionTest(request):
 
 @login_required
 def loadSclientTorrents(request):
+    killAllBackgroupTasks()
     vname = "task_loadtorrent"
-    if not checkTaskExists(vname):
-        backgroundLoadSeedClientToDatabase(schedule=0, verbose_name=vname)
+    backgroundLoadSeedClientToDatabase(schedule=0, verbose_name=vname)
     # loadSeedClientToDatabase.now()
 
     vname = "task_speeding_torrent"
-    if not checkTaskExists(vname):
-        initSpeedingTables()
-        GetSpeedingTorrentRoutine(repeat=300, verbose_name=vname)
+    initSpeedingTables()
+    GetSpeedingTorrentRoutine(repeat=300, verbose_name=vname)
     sclientList = SeedClientSetting.objects.all()
     for sc in sclientList:
         sc.online = 0  # waiting
@@ -170,8 +169,7 @@ def seedClientUpdateFunc(request, pk, template_name='seedclient/update.html'):
     form = SeedClientForm(request.POST or None, instance=sclient)
     if form.is_valid():
         validatePostedData(request)
-        # validateFormData(form)
-        # form.instance = sclient
+
         form2 = SeedClientForm(request.POST, instance=sclient)
         form2.save()
         return redirect('sc_list')

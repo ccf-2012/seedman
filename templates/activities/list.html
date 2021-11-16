@@ -96,8 +96,8 @@ var myChart1 = new Chart(linectx, {
         normalized: true,
         fill: true,
         indexAxis: "x",
-        backgroundColor: backgroundColorList,
-        borderColor: borderColorList,
+        backgroundColor: backgroundColorList[0],
+        borderColor: borderColorList[0],
         pointRadius: 0,
         borderWidth: 1
       },
@@ -105,8 +105,6 @@ var myChart1 = new Chart(linectx, {
       {
         label: '{{ sepsp.tracker }}',
         data: [{%for data in sepsp.stlist %}{{ data.sum_upload_speed }}, {% endfor %}],
-        backgroundColor: backgroundColorList,
-        borderColor: borderColorList,
         fill: false,
         pointRadius: 0,
         borderWidth: 1
