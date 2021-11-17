@@ -175,7 +175,7 @@ class TableView(AjaxDatatableView):
         'ptsbao': 'https://ptsbao.club/torrents.php?search=',
         'soulvoice': 'https://pt.soulvoice.club/torrents.php?search=',
         'hdhome': 'https://hdhome.org/torrents.php?search=',
-        'lemonhd': 'https://lemonhd.org/torrents.php?search=',
+        'leaguehd': 'https://lemonhd.org/torrents.php?search=',
         'hdtime': 'https://hdtime.org/torrents.php?search=',
         'stackoverflow': 'https://iptorrents.com/t?q=',
         'empirehost': 'https://iptorrents.com/t?q=',
