@@ -177,6 +177,7 @@ class TableView(AjaxDatatableView):
         'pttime': 'https://www.pttime.org/torrents.php?search=',
         'hd': 'https://www.hd.ai/torrents.php?search=',
         'bwtorrents': 'https://bwtorrents.tv/index.php?search=',
+        '52pt': 'https://52pt.site/torrents.php?search=',
     }
 
     def getMovieName(self, torName):
