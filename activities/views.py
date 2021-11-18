@@ -82,7 +82,7 @@ def activeListSelect(request, pk):
             'refresh': True
         })
 
-
+@login_required
 def ajaxRefreshActiveList(request, pk):
     if pk <= 0:
         return render(request, 'activities/tor_list.html', {

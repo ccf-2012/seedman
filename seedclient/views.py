@@ -116,7 +116,7 @@ def loadSclientTorrents(request):
         'refresh': True
     })
 
-
+@login_required
 def refreshSeedClientList(request):
     sclist = SeedClientSetting.objects.all()
     return render(request, 'seedclient/sclist.html', {'sclient_list': sclist})
@@ -129,7 +129,7 @@ class SeedClientAddView(CreateView):
     form_class = SeedClientForm
     success_url = reverse_lazy('sc_list')
 
-
+@login_required
 def validatePostedData(request):
     newsc = request.POST.copy()
     if not newsc["root_dir"].endswith('/'):
@@ -143,7 +143,7 @@ def validateFormData(form):
         form.cleaned_data['root_dir'] = form.cleaned_data['root_dir'] + '/'
     return
 
-
+@login_required
 def seedClientAddFunc(request):
     if request.method == "POST":
         form = SeedClientForm(request.POST)

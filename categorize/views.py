@@ -171,7 +171,7 @@ def categorizeProceed(request):
         'refresh': True
     })
 
-
+@login_required
 def refreshProgress(request):
     csList = CategorizeStep.objects.all()
     if len(csList) <= 0:

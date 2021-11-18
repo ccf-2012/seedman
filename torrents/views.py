@@ -228,7 +228,7 @@ class TableView(AjaxDatatableView):
         else:
             return ''
 
-
+@login_required
 def torrentIndex(request):
     return render(request, 'torrent/tablelist.html', {})
 
