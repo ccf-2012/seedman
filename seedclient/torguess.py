@@ -62,10 +62,10 @@ class GuessCategoryUtils:
 
     def categoryByKeyword(torName):
         if re.search(r'(上下册|全.{1,4}册|精装版|修订版|第\d版|共\d本|文集|新修版|PDF版|课本|课件|出版社)',
-                     torName, re.I):
+                     torName):
             GuessCategoryUtils.setCategory('eBook')
         elif re.search(r'(\d+册|\d+期|\d+版|\d+本|\d+年|\d+月|系列|全集|作品集).?$',
-                       torName, re.I):
+                       torName):
             GuessCategoryUtils.setCategory('eBook')
         elif re.search(r'(\bConcert|演唱会|音乐会|\bLive[. ]At)\b', torName, re.I):
             GuessCategoryUtils.setCategory('MV')
@@ -74,9 +74,9 @@ class GuessCategoryUtils:
         elif re.search(r'(\bVarious Artists|FLAC|\bMQA\b|整轨|分轨|XRCD\d{1,3})\b',
                        torName, re.I):
             GuessCategoryUtils.setCategory('Music')
-        elif re.search(r'(\d ?CD|24-96|SACD).?$', torName, re.I):
+        elif re.search(r'(\b\d+ ?CD|24-96|SACD)\b', torName):
             GuessCategoryUtils.setCategory('Music')
-        elif re.search(r'(乐团|交响曲|协奏曲|二重奏)', torName, re.I):
+        elif re.search(r'(乐团|交响曲|协奏曲|二重奏)', torName):
             GuessCategoryUtils.setCategory('Music')
         else:
             return False

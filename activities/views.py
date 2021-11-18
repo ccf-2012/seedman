@@ -51,6 +51,7 @@ def activeList(request):
 @login_required
 def activeListSelect(request, pk):
     sclient = get_object_or_404(SeedClientSetting, pk=pk)
+    # for one day, extensible
     timeRange = timezone.now() - timedelta(days=1)
     splistAll = SpeedPoint.objects.filter(sclient=sclient,
                                           tracker='ALL',

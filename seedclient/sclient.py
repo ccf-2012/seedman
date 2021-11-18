@@ -254,7 +254,7 @@ class TrSeedClient(SeedClientBase):
                 'id', 'name', 'hashString', 'downloadDir', 'totalSize',
                 'trackers', 'addedDate', 'status', 'percentDone', 'seeders',
                 'leechers', 'rateUpload', 'rateDownload', 'uploadedEver',
-                'downloadedEver'
+                'downloadedEver', 'uploadRatio'
             ])
         activeList = []
         for tor in torList:
@@ -274,6 +274,7 @@ class TrSeedClient(SeedClientBase):
                 tor.download_dir,
                 tor.uploadedEver,
                 tor.downloadedEver,
+                tor.uploadRatio,
             )
             activeList.append(at)
         return activeList
@@ -364,6 +365,7 @@ class QbSeedClient(SeedClientBase):
                 tor.save_path,
                 tor.total_uploaded,
                 tor.total_downloaded,
+                tor.ratio,
             )
             activeList.append(at)
         return activeList
@@ -444,7 +446,7 @@ class DeSeedClient(SeedClientBase):
             'core.get_torrents_status', {"state": "Active"}, [
                 'name', 'hash', 'download_location', 'total_size',
                 'tracker_host', 'time_added', 'state', 'progress', 'num_seeds',
-                'num_peers', 'peers', 'total_uploaded', 'total_done'
+                'num_peers', 'peers', 'total_uploaded', 'total_done', 'ratio'
             ])
         activeList = []
         for deTor in torList.values():
@@ -471,6 +473,7 @@ class DeSeedClient(SeedClientBase):
                 deTor[b'download_location'].decode("utf-8"),
                 deTor[b'total_uploaded'],
                 deTor[b'total_done'],
+                deTor[b'ratio'],
             )
             activeList.append(at)
         return activeList
@@ -480,7 +483,7 @@ class ActiveTorrent(object):
     def __init__(self, torrent_hash, scname, name, size, progress,
                  upload_speed, download_speed, seeder_num, leech_num, tracker,
                  added_date, status, save_path, total_uploaded,
-                 total_downloaded):
+                 total_downloaded, ratio):
         self.torrent_hash = torrent_hash
         self.scname = scname
         self.name = name
@@ -501,6 +504,7 @@ class ActiveTorrent(object):
         self.save_path = save_path
         self.total_uploaded = total_uploaded
         self.total_downloaded = total_downloaded
+        self.ratio = ratio
 
 class Activities:
     def __init__(self, scname, atlist):

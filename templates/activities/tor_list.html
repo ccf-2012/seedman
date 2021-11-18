@@ -19,6 +19,7 @@
 				<th scope="col" style="width: 6%;">进度</th>
 				<th scope="col" style="width: 8%;">上传速度</th>
 				<th scope="col" style="width: 8%;">下载速度</th>
+				<th scope="col" style="width: 6%;">分享率</th>
 				<th scope="col" style="width: 10%;">站点</th>
 				<th scope="col" style="width: 12%;">加入时间</th>
 			</tr>
@@ -32,6 +33,7 @@
 				<td scope="col"> {{ item.progress }} </td>
 				<td scope="col"> {{ item.uploadspeedStr }} </td>
 				<td scope="col"> {{ item.downloadspeedStr }} </td>
+				<td scope="col"> {{ item.ratio|floatformat:2 }} </td>
 				<td scope="col"> {{ item.tracker }} </td>
 				<td scope="col"> {{ item.added_date }} </td>
 			</tr>
