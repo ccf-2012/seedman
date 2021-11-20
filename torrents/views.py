@@ -184,7 +184,7 @@ class TableView(AjaxDatatableView):
         #     breakpoint()
 
         sstr = re.sub(
-            '((UHD)?\s+BluRay|Blu-ray|720p|1080[pi]|\.2160p|\.576i|WEB-DL|\.DVD\.|WEBRip|HDTV|REMASTERED|LIMITED|Complete|SUBBED|TV Series).*$',
+            '((UHD)?\s+BluRay|Blu-ray|720p|1080[pi]|2160p|576i|WEB-DL|\.DVD\.|WEBRip|HDTV|REMASTERED|LIMITED|Complete|SUBBED|TV Series).*$',
             '',
             sstr,
             flags=re.I)
@@ -220,12 +220,18 @@ class TableView(AjaxDatatableView):
 
         return sstr if len(sstr) > 6 else chtitle
 
+    def cutExt(self, torName):
+        sstr = torName
+        arext = ['.mkv', '.ts', '.m2ts', '.vob', '.mpg']
+        for sext in arext:
+            if sstr.endswith(sext):
+                sstr = sstr[:-len(sext)]
+                return sstr
+        return sstr
+
     def _get_search_link(self, obj):
         if obj.tracker in self.SEARCH_URL_PREFIX:
-            sstr = obj.name
-            arext = ['.mkv', '.ts', '.m2ts', 'vob']
-            for sext in arext:
-                sstr = sstr.replace(sext, '')
+            sstr = self.cutExt(obj.name)
             if obj.guess_category not in ['Audio', 'Music', 'eBook']:
                 sstr = self.getMovieName(sstr)
             return self.SEARCH_URL_PREFIX[obj.tracker] + sstr.strip()

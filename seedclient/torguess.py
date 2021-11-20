@@ -54,7 +54,7 @@ class GuessCategoryUtils:
             GuessCategoryUtils.setCategory('eBook')
         elif re.search(r'\.(mpg)\b', torName, re.I):
             GuessCategoryUtils.setCategory('MV')
-        elif re.search(r'\b(FLAC|DSD(\d{1,3})?)$', torName, re.I):
+        elif re.search(r'\b(FLAC.{0,3}|DSD(\d{1,3})?)$', torName, re.I):
             GuessCategoryUtils.setCategory('Music')
         else:
             return False
@@ -74,7 +74,7 @@ class GuessCategoryUtils:
         elif re.search(r'(\bVarious Artists|\bMQA\b|整轨|分轨|XRCD\d{1,3})\b',
                        torName, re.I):
             GuessCategoryUtils.setCategory('Music')
-        elif re.search(r'(\b\d+ ?CD|24-96|SACD)\b', torName):
+        elif re.search(r'(\b\d+ ?CD|24-96|24-192|SACD|CD[\s-]+FLAC|FLAC[\s-]+CD)\b', torName):
             GuessCategoryUtils.setCategory('Music')
         elif re.search(r'(乐团|交响曲|协奏曲|二重奏)', torName):
             GuessCategoryUtils.setCategory('Music')
@@ -106,8 +106,20 @@ class GuessCategoryUtils:
             return False
         return True
 
+    def cutExt(torName):
+        sstr = torName
+        arext = ['.mkv', '.ts', '.m2ts', '.vob', '.mpg']
+        for sext in arext:
+            if sstr.endswith(sext):
+                sstr = sstr[:-len(sext)]
+                return sstr
+        return sstr
+
     def parseGroup(torName):
-        match = re.search(r'[@\-￡]\s?(\w{3,12})\b(?!.*[@\-￡])', torName, re.I)
+        # if torName.endswith('-PTer.mkv'):
+        #     breakpoint()
+        sstr = GuessCategoryUtils.cutExt(torName)
+        match = re.search(r'[@\-￡]\s?(\w{3,12})\b(?!.*[@\-￡].*)$', sstr, re.I)
         if match:
             groupName = match.group(1).strip().upper()
             if groupName.startswith('CMCT'):
@@ -157,6 +169,7 @@ class GuessCategoryUtils:
         GuessCategoryUtils.group = GuessCategoryUtils.parseGroup(torName)
         if GuessCategoryUtils.categoryByExt(torName):
             return GuessCategoryUtils.category, GuessCategoryUtils.group
+
 
         info = PTN.parse(torName)
         if GuessCategoryUtils.categoryTvByName(torName, info):
