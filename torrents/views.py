@@ -52,10 +52,8 @@ class TableView(AjaxDatatableView):
             'name': 'sizeStr',
             'visible': True,
             'title': '大小',
-            'choices': size_choices,
             'sort_field': 'size',
-            # 'searchable': False,
-            'lookup_field': '__lte',
+            'searchable': False,
         },
         {
             'name': 'guess_category',
@@ -182,8 +180,11 @@ class TableView(AjaxDatatableView):
 
     def getMovieName(self, torName):
         sstr = torName
+        # if torName.startswith('徐佳莹 - 问劫 (HD 1080p)-PTerMV'):
+        #     breakpoint()
+
         sstr = re.sub(
-            '(BluRay|Blu-ray|720p|1080[pi]|2160|WEB-DL|WEBRip|HDTV|REMASTERED|LIMITED|Complete|SUBBED|TV Series).*$',
+            '((UHD)?\s+BluRay|Blu-ray|720p|1080[pi]|\.2160p|\.576i|WEB-DL|\.DVD\.|WEBRip|HDTV|REMASTERED|LIMITED|Complete|SUBBED|TV Series).*$',
             '',
             sstr,
             flags=re.I)
@@ -195,7 +196,6 @@ class TableView(AjaxDatatableView):
             '{': ' ',
             '}': ' ',
             '_': ' ',
-            '-': ' '
         }
         for original, replacement in dilimers.items():
             sstr = sstr.replace(original, replacement)
@@ -208,22 +208,26 @@ class TableView(AjaxDatatableView):
         #     sstr = m.group(0)
 
         chtitle = sstr
+            
         m = re.search(
             '^.*[\u4e00-\u9fa5\u3041-\u30fc](S\d+| |\.|\d|-)*(?=[A-Z])', sstr)
         if m:
             chtitle = m.group(0)
+            sstr = sstr.replace(chtitle, '')
+        sstr = re.sub('\((\w+| )\)?(?!.*\(.*\)).*$', '', sstr).strip()
+        if sstr.endswith(' JP'):
+            sstr = sstr.replace(' JP', '')
 
-        sstr = sstr.replace(chtitle, '')
-        return sstr if len(sstr) > len(chtitle) else chtitle
+        return sstr if len(sstr) > 6 else chtitle
 
     def _get_search_link(self, obj):
         if obj.tracker in self.SEARCH_URL_PREFIX:
             sstr = obj.name
-            arext = ['.mkv', '.ts']
+            arext = ['.mkv', '.ts', '.m2ts', 'vob']
             for sext in arext:
                 sstr = sstr.replace(sext, '')
             if obj.guess_category not in ['Audio', 'Music', 'eBook']:
-                sstr = self.getMovieName(obj.name)
+                sstr = self.getMovieName(sstr)
             return self.SEARCH_URL_PREFIX[obj.tracker] + sstr.strip()
         else:
             return ''

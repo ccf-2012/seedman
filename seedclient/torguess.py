@@ -71,7 +71,7 @@ class GuessCategoryUtils:
             GuessCategoryUtils.setCategory('MV')
         elif re.search(r'\bBugs!.?\.mp4', torName, re.I):
             GuessCategoryUtils.setCategory('MV')
-        elif re.search(r'(\bVarious Artists|FLAC|\bMQA\b|整轨|分轨|XRCD\d{1,3})\b',
+        elif re.search(r'(\bVarious Artists|\bMQA\b|整轨|分轨|XRCD\d{1,3})\b',
                        torName, re.I):
             GuessCategoryUtils.setCategory('Music')
         elif re.search(r'(\b\d+ ?CD|24-96|SACD)\b', torName):
@@ -83,7 +83,7 @@ class GuessCategoryUtils:
         return True
 
     def categoryTvByName(torName, ptnInfo):
-        if re.search(r'S0\d\W|\d季|第\w{1,3}季\W', torName, re.I):
+        if re.search(r'[E|S]\d+\W|EP\d+\W|\d+季|第\w{1,3}季\W', torName, re.I):
             GuessCategoryUtils.setCategory('TV')
         elif re.search(r'\Wcomplete\W|全\d+集|\d+集全', torName, re.I):
             GuessCategoryUtils.setCategory('TV')
