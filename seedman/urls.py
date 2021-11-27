@@ -75,6 +75,8 @@ urlpatterns += [
     # path('torrent/index2/', torview.ZeroConfigurationDatatableView.as_view(), name='tor_index2'),
     path('torrent/index/', torview.torrentIndex, name='tor_index'),
     path('ajax_datatable/torrent', torview.TableView.as_view(), name='tor_table'),
+    path('torrent/pause/<int:tor_id>', torview.pauseTorrent, name='tor_pause'),
+    path('torrent/delete/<int:tor_id>', torview.deleteTorrentAndReseed, name='tor_delete'),
 ]
 
 urlpatterns += [

@@ -9,7 +9,6 @@
 				<th scope="col" style="width: 16%;">主机</th>
 				<th scope="col" style="width: 9%;">端口</th>
 				<th scope="col" style="width: 13%;">用户名</th>
-				<th scope="col" style="width: 13%;">存储根目录</th>
 				<th scope="col" style="text-align: center;width: 10%;">修改</th>
 				<th scope="col" style="text-align: center;width: 10%;">删除</th>
 				<!-- <th scope="col" style="text-align: center;width: 14%;">测试</th> -->
@@ -37,7 +36,6 @@
 				<td scope="col"> {{ item.host }} </td>
 				<td scope="col"> {{ item.port }} </td>
 				<td scope="col"> {{ item.username }} </td>
-				<td scope="col"> {{ item.root_dir }} </td>
 				<td scope="col" style="text-align: center">
 					<a href="{% url 'sc_update' item.seedclient_id %}" class="btn btn-outline-primary ">修改</a>
 				</td>

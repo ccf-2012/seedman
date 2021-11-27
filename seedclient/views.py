@@ -41,10 +41,10 @@ def removeEmptyCategories():
     GuessCategory.objects.filter(count=0).delete()
 
 
-def fixSclientPath(sclient):
-    if not sclient.root_dir.endswith('/'):
-        sclient.root_dir = sclient.root_dir + '/'
-        sclient.save()
+# def fixSclientPath(sclient):
+#     if not sclient.root_dir.endswith('/'):
+#         sclient.root_dir = sclient.root_dir + '/'
+#         sclient.save()
 
 
 @background(schedule=0)
@@ -54,7 +54,7 @@ def backgroundLoadSeedClientToDatabase():
 
     sclientList = SeedClientSetting.objects.all().order_by("pk")
     for sc in sclientList:
-        fixSclientPath(sc)
+        # fixSclientPath(sc)
         c = SeedClientUtil.getSeedClientObj(sc)
         c.loadTorrents()
     removeEmptyCategories()
@@ -129,26 +129,26 @@ class SeedClientAddView(CreateView):
     form_class = SeedClientForm
     success_url = reverse_lazy('sc_list')
 
-@login_required
-def validatePostedData(request):
-    newsc = request.POST.copy()
-    if not newsc["root_dir"].endswith('/'):
-        newsc["root_dir"] = newsc["root_dir"] + '/'
-    request.POST = newsc
-    return
+# @login_required
+# def validatePostedData(request):
+#     newsc = request.POST.copy()
+#     if not newsc["root_dir"].endswith('/'):
+#         newsc["root_dir"] = newsc["root_dir"] + '/'
+#     request.POST = newsc
+#     return
 
 
-def validateFormData(form):
-    if not form.cleaned_data['root_dir'].endswith('/'):
-        form.cleaned_data['root_dir'] = form.cleaned_data['root_dir'] + '/'
-    return
+# def validateFormData(form):
+#     if not form.cleaned_data['root_dir'].endswith('/'):
+#         form.cleaned_data['root_dir'] = form.cleaned_data['root_dir'] + '/'
+#     return
 
 @login_required
 def seedClientAddFunc(request):
     if request.method == "POST":
         form = SeedClientForm(request.POST)
         if form.is_valid():
-            validatePostedData(request)
+            # validatePostedData(request)
             form2 = SeedClientForm(request.POST)
             form2.save()
             return redirect('sc_list')
@@ -168,7 +168,7 @@ def seedClientUpdateFunc(request, pk, template_name='seedclient/update.html'):
     sclient = get_object_or_404(SeedClientSetting, pk=pk)
     form = SeedClientForm(request.POST or None, instance=sclient)
     if form.is_valid():
-        validatePostedData(request)
+        # validatePostedData(request)
 
         form2 = SeedClientForm(request.POST, instance=sclient)
         form2.save()

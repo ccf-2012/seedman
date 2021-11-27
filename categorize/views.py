@@ -2,15 +2,17 @@ from django.contrib.auth.decorators import login_required
 from django.http.response import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from ajax_datatable.views import AjaxDatatableView
-from seedclient.models import Torrent, LocationCategory, SeedClientSetting, CategorizeStep
+from seedclient.models import Torrent, LocationCategory, SeedClientSetting, CategorizeStep, MoveList
+from seedclient.torguess import GuessCategoryUtils
 from .forms import CategoryExcludeForm
 from .tasks import backgroundProceedCategorize
 from activities.tasks import checkTaskExists
+import os
 
 
 class categorizeTable(AjaxDatatableView):
-    model = Torrent
-    title = 'Torrent'
+    model = MoveList
+    title = 'MoveList'
     length_menu = [[
         30,
         50,
@@ -24,7 +26,7 @@ class categorizeTable(AjaxDatatableView):
     column_defs = [
         {
             'name': 'sclient',
-            'foreign_field': 'sclient__name',
+            'foreign_field': 'torrent__sclient__name',
             'visible': True,
             'title': '下载器',
             'searchable': False,
@@ -32,63 +34,63 @@ class categorizeTable(AjaxDatatableView):
         },
         {
             'name': 'name',
+            'foreign_field': 'torrent__name',
             'title': '名称',
             'searchable': False,
         },
         {
             'name': 'sizeStr',
+            'foreign_field': 'torrent__size',
             'title': '大小',
-            'sort_field': 'size',
+            # 'sort_field': 'torrent__size',
             'searchable': False,
         },
         {
+            'name': 'tracker',
+            'foreign_field': 'torrent__tracker',
+            'visible': True,
+            'title': '站点',
+            'searchable': False,
+            # 'choices': True,
+            # 'autofilter': True,
+            # 'lookup_field': '__iexact',
+        },
+        {
             'name': 'location',
+            'foreign_field': 'torrent__location',
             'title': '当前存储位置',
             'searchable': False,
         },
         {
             'name': 'guess_category',
-            'foreign_field': 'guess_category__label',
+            'foreign_field': 'torrent__guess_category__label',
             'searchable': False,
             'title': '分类'
         },
         {
-            'name': 'moveto',
-            'placeholder': True,
+            'name': 'moveto_location',
             'searchable': False,
             'title': '移动到',
         },
-        {
-            'name': 'exclude',
-            'visible': False,
-            'searchable': False,
-            'title': '是否排除',
-        },
-        {
-            'name': 'categorized',
-            'visible': False,
-            'searchable': False,
-            'title': '未归类',
-        },
     ]
 
-    def customize_row(self, row, obj):
-        if obj.location is not None:
-            if obj.sclient.root_dir.endswith('/'):
-                row['moveto'] = obj.sclient.root_dir + obj.guess_category.label
-            else:
-                row['moveto'] = obj.sclient.root_dir + '/' + obj.guess_category.label
-        else:
-            row['moveto'] = ''
-        return
+    # def customize_row(self, row, obj):
+    #     if obj.location is not None:
+    #         if obj.sclient.root_dir.endswith('/'):
+    #             row['moveto'] = obj.sclient.root_dir + obj.guess_category.label
+    #         else:
+    #             row['moveto'] = obj.sclient.root_dir + '/' + obj.guess_category.label
+    #     else:
+    #         row['moveto'] = ''
+    #     return
 
-    def get_initial_queryset(self, request=None):
-        csList = CategorizeStep.objects.all()
-        if len(csList) > 0:
-            cs = csList[0]
-        queryset = self.model.objects.filter(sclient__name=cs.sclient.name,
-                                             location_category__exclude=False)
-        return queryset
+    # def get_initial_queryset(self, request=None):
+    #     csList = CategorizeStep.objects.all()
+    #     if len(csList) > 0:
+    #         cs = csList[0]
+    #     queryset = self.model.objects.filter(sclient__name=cs.sclient.name,
+    #                                          location_category__exclude=False)
+    #     return queryset
 
 
 def saveExcludeDirs(form_dir_exclude):
@@ -100,6 +102,42 @@ def saveExcludeDirs(form_dir_exclude):
         else:
             loc.exclude = True
         loc.save()
+
+
+def generateTargetDir(rootDir, catDir):
+    targetDir = os.path.join(rootDir, catDir)
+    if not targetDir.endswith('/'):
+        targetDir += '/'
+    return targetDir
+
+def getAllReseedTorrent(sc, torName, torSize):
+    torList = Torrent.objects.filter(
+        sclient=sc, name=torName, size=torSize, location_category__exclude=False)
+    return torList
+
+
+def generateMoveList(cateStep):
+    MoveList.objects.all().delete()
+    moveByTrackerList = cateStep.trackList.split(',')
+    for tor in Torrent.objects.filter(sclient=cateStep.sclient,
+                                      location_category__exclude=False,
+                                      tracker__in=moveByTrackerList):
+        reseedTorList = getAllReseedTorrent(cateStep.sclient, tor.name, tor.size)
+        for reseedTor in reseedTorList:
+            if not MoveList.objects.filter(torrent=reseedTor).exists():
+                ml = MoveList()
+                ml.torrent = reseedTor
+                ml.moveto_location = generateTargetDir(cateStep.root_dir, tor.tracker)
+                ml.save()
+
+    for tor in Torrent.objects.filter(sclient=cateStep.sclient,
+                                      location_category__exclude=False):
+        if not MoveList.objects.filter(torrent=tor).exists():
+            ml = MoveList()
+            ml.torrent = tor
+            catDir, groupDir = GuessCategoryUtils.guessByName(tor.name)
+            ml.moveto_location = generateTargetDir(cateStep.root_dir, catDir)
+            ml.save()
 
 
 @login_required
@@ -129,12 +167,15 @@ def categorizeStep1(request):
     if request.method == "POST":
         form = CategoryExcludeForm(request.POST)
         if form.is_valid():
-            cs.sclient.root_dir = form.cleaned_data['scRootDir']
-            cs.sclient.save()
+            cs.root_dir = form.cleaned_data['scRootDir']
+            cs.save()
             saveExcludeDirs(form.cleaned_data['dirNotExclude'])
+            cs.trackList = ','.join(form.cleaned_data['trackerSelect'])
+            cs.save()
+            generateMoveList(cs)
             return redirect('cat_step2')
     form = CategoryExcludeForm()
-    # form.
+
     return render(request, 'categorize/step1.html', {
         'form': form,
         'scname': cs.sclient.name

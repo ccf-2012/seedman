@@ -1,7 +1,8 @@
+import logging
 import qbittorrentapi
 import transmission_rpc
 import deluge_client
-from seedclient.models import GuessCategory, Torrent, LocationCategory, TrackerCategory, CategorizeStep
+from seedclient.models import GuessCategory, Torrent, LocationCategory, TrackerCategory, CategorizeStep, MoveList
 from seedclient.torguess import GuessCategoryUtils
 import urllib.parse
 from abc import abstractmethod, ABCMeta
@@ -10,6 +11,7 @@ from django.utils import timezone
 import pytz
 from .humanbytes import HumanBytes
 
+log = logging.getLogger(__name__)
 
 def getSeedClientObj(scsetting):
     if scsetting.clienttype == 'qb':
@@ -22,6 +24,9 @@ def getSeedClientObj(scsetting):
 
 
 class SeedClientBase(metaclass=ABCMeta):
+    def __init__(self, scsetting):
+        self.scsetting = scsetting
+
     @abstractmethod
     def connect(self):
         pass
@@ -31,11 +36,21 @@ class SeedClientBase(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def moveTorrentData(self, categorizeConfig):
+    def callRPCMove(self, tor_hash, targetDir):
         pass
 
-    def __init__(self, scsetting):
-        self.scsetting = scsetting
+    @abstractmethod
+    def pauseTorrent(self, tor_hash):
+        pass
+
+    @abstractmethod
+    def reStatusTorrent(self, dbid, tor_hash):
+        pass
+
+    @abstractmethod
+    def deleteTorrent(self, tor_hash):
+        pass
+
 
     def setDbTorGuessCat(self, dbtor, cat):
         if not cat:
@@ -81,25 +96,25 @@ class SeedClientBase(metaclass=ABCMeta):
         dbtor.tracker_category = dbTracker
         return True
 
-    def categorized(self, sclient, guessCategory, curLocation):
-        if sclient.root_dir.endswith('/'):
-            suggestDir = sclient.root_dir + guessCategory + '/'
-        else:
-            suggestDir = sclient.root_dir + '/' + guessCategory + '/'
+    # def categorized(self, sclient, guessCategory, curLocation):
+    #     if sclient.root_dir.endswith('/'):
+    #         suggestDir = sclient.root_dir + guessCategory + '/'
+    #     else:
+    #         suggestDir = sclient.root_dir + '/' + guessCategory + '/'
 
-        if not curLocation.endswith('/'):
-            curLocation = curLocation + '/'
+    #     if not curLocation.endswith('/'):
+    #         curLocation = curLocation + '/'
 
-        return suggestDir == curLocation
+    #     return suggestDir == curLocation
 
-    def compareParentDir(self, newDir):
-        if not newDir.endswith('/'):
-            newDir = newDir + '/'
-        if len(self.scsetting.root_dir) == 0:
-            self.scsetting.root_dir = newDir
-        elif self.scsetting.root_dir.startswith(newDir) and (len(newDir) < len(
-                self.scsetting.root_dir)):
-            self.scsetting.root_dir = newDir
+    # def compareParentDir(self, newDir):
+    #     if not newDir.endswith('/'):
+    #         newDir = newDir + '/'
+    #     if len(self.scsetting.root_dir) == 0:
+    #         self.scsetting.root_dir = newDir
+    #     elif self.scsetting.root_dir.startswith(newDir) and (len(newDir) < len(
+    #             self.scsetting.root_dir)):
+    #         self.scsetting.root_dir = newDir
 
     def addDbTorrent(self, torName, torHash, torSize, torLocation, torTracker,
                      torAdded, torStatus, torCategory):
@@ -146,17 +161,18 @@ class SeedClientBase(metaclass=ABCMeta):
             testDir = downloadDir + '/'
         return testDir
 
-    def generateTargetDir(self, sclient, torName):
-        catDir, groupDir = GuessCategoryUtils.guessByName(torName)
-        if catDir:
-            targetDir = sclient.root_dir + catDir + '/'
-            return targetDir
-        return None
+    # def generateTargetDir(self, sclient, torName):
+    #     catDir, groupDir = GuessCategoryUtils.guessByName(torName)
+    #     if catDir:
+    #         targetDir = sclient.root_dir + catDir + '/'
+    #         return targetDir
+    #     return None
 
     def getMoveList(self):
-        return Torrent.objects.filter(sclient__name=self.scsetting.name,
-                                      categorized=0,
-                                      location_category__exclude=False)
+        # return Torrent.objects.filter(sclient__name=self.scsetting.name,
+        #                               location_category__exclude=False)
+        return MoveList.objects.all()
+
 
     def moveTorrentData(self, categorizeConfig):
         if not self.connect():
@@ -164,27 +180,37 @@ class SeedClientBase(metaclass=ABCMeta):
         moveList = self.getMoveList()
         categorizeConfig.totalTorrentNum = len(moveList)
         categorizeConfig.currentProceedingNum = 0
-        for dbTor in moveList:
+        for mvitem in moveList:
             categorizeConfig.currentProceedingNum += 1
             categorizeConfig.save()
-            targetDir = self.generateTargetDir(self.scsetting, dbTor.name)
-
-            self.callRPCMove(dbTor.hash, targetDir)
-
-            dbTor.location = targetDir
-            dbTor.categorized = 1
-            dbTor.location_category.count -= 1
-            dbTor.location_category.save()
-            self.categoryLocation(dbTor)
-            dbTor.save()
+            # targetDir = self.generateTargetDir(self.scsetting, dbTor.name)
+            if mvitem.torrent.location != mvitem.moveto_location:
+                self.callRPCMove(mvitem.torrent.hash, mvitem.moveto_location)
+                mvitem.torrent.location = mvitem.moveto_location
+            mvitem.torrent.categorized = 1  #TODO: no use for now
+            mvitem.torrent.location_category.count -= 1
+            mvitem.torrent.location_category.save()
+            self.categoryLocation(mvitem.torrent)
+            mvitem.torrent.save()
 
         LocationCategory.objects.filter(count=0).delete()
         categorizeConfig.totalMovedNum = categorizeConfig.currentProceedingNum
         categorizeConfig.save()
         return categorizeConfig.currentProceedingNum
 
+    def deleteTorrentAndReseed(self, tor_name, tor_size):
+        torList = Torrent.objects.filter(sclient__name=self.scsetting.name,
+                                         name=tor_name, size=tor_size)
+        for tor in torList:
+            tor.status = '_DELETED_'
+            tor.save()
+            self.deleteTorrent(tor.hash)
+        return(len(torList))
+
 
 class TrSeedClient(SeedClientBase):
+    # def __init__(self):
+
     def connect(self):
         self.trClient = None
         try:
@@ -279,6 +305,37 @@ class TrSeedClient(SeedClientBase):
             activeList.append(at)
         return activeList
 
+    def pauseTorrent(self, tor_hash):
+        try:
+            trTor = self.trClient.get_torrent(tor_hash)
+            if trTor.status == 'stopped':
+                trTor.start()
+            else:
+                trTor.stop()
+        except Exception as ex:
+            log.error('There was an error during remove_torrent: %s', ex)
+    
+    def reStatusTorrent(self, dbid, tor_hash):
+        try:
+            trTor = self.trClient.get_torrent(tor_hash)
+            dbtor = Torrent.objects.get(torrent_id=dbid)
+            dbtor.status = trTor.status
+            dbtor.save()
+        except Exception as ex:
+            log.error('There was an error during remove_torrent: %s', ex)
+            dbtor = Torrent.objects.get(torrent_id=dbid)
+            # breakpoint()
+            dbtor.status = '_NOT_FOUND_'
+            dbtor.save()
+        finally:
+            return trTor.status
+
+    def deleteTorrent(self, tor_hash):
+        try:
+            self.trClient.remove_torrent(tor_hash, True)
+        except Exception as ex:
+            log.error('There was an error during remove_torrent: %s', ex)
+    
 
 class QbSeedClient(SeedClientBase):
     def connect(self):
@@ -291,8 +348,8 @@ class QbSeedClient(SeedClientBase):
         )
         try:
             self.qbClient.auth_log_in()
-        except:
-            print('Error: check connection settings.')
+        except Exception as ex:
+            log.error('There was an error during auth_log_in: %s', ex)
             return None
 
         return self.qbClient
@@ -314,7 +371,7 @@ class QbSeedClient(SeedClientBase):
                 self.abbrevTracker(tor.tracker),
                 datetime.utcfromtimestamp(
                     tor.added_on).replace(tzinfo=pytz.utc),
-                tor.trackers[3]['status'], tor.category)
+                tor.state, tor.category)
             countSizeTotal += tor.size
 
         self.scsetting.num_total = len(torList)
@@ -334,12 +391,12 @@ class QbSeedClient(SeedClientBase):
         return abbrev
 
     def callRPCMove(self, tor_hash, targetDir):
-        qbList = self.qbClient.torrents_info(hashs=[tor_hash])
+        qbList = self.qbClient.torrents_info(torrent_hashes=tor_hash)
         if len(qbList) > 0:
             qbTor = qbList[0]
             # qbTor.setCategory(GuessCategoryUtils.CATEGORIES[catstr][0])
             # qbTor.setAutoManagement(True)
-            qbTor.setLocation(targetDir)
+            qbTor.setLocation(location=targetDir)
 
     def loadActiveTorrent(self):
         qbClient = self.connect()
@@ -363,12 +420,49 @@ class QbSeedClient(SeedClientBase):
                     tor.added_on).replace(tzinfo=pytz.utc),
                 tor.state,
                 tor.save_path,
-                tor.total_uploaded,
-                tor.total_downloaded,
+                tor.uploaded,
+                tor.downloaded,
                 tor.ratio,
             )
             activeList.append(at)
         return activeList
+
+    def pauseTorrent(self, tor_hash):
+        try:
+            qbList = self.qbClient.torrents_info(torrent_hashes=tor_hash)
+            if len(qbList) > 0:
+                qbTor = qbList[0]
+                if qbTor.state == 'pausedUP':
+                    qbTor.resume()
+                else: 
+                    qbTor.pause()
+        except Exception as ex:
+            log.error('There was an error during client.torrents_info: %s', ex)
+
+    def reStatusTorrent(self, dbid, tor_hash):
+        try:
+            qbList = self.qbClient.torrents_info(torrent_hashes=tor_hash)
+            if len(qbList) > 0:
+                qbTor = qbList[0]
+                dbtor = Torrent.objects.get(torrent_id=dbid)
+                dbtor.status = qbTor.state
+                dbtor.save()
+                return dbtor.status
+            else:
+                return None
+        except Exception as ex:
+            log.error('There was an error during client.torrents_info : %s', ex)
+            dbtor = Torrent.objects.get(torrent_id=dbid)
+            # breakpoint()
+            dbtor.status = '_NOT_FOUND_'
+            dbtor.save()
+            return dbtor.status
+
+    def deleteTorrent(self, tor_hash):
+        try:
+            self.qbClient.torrents_delete(True, torrent_hashes=tor_hash)
+        except Exception as ex:
+            log.error('There was an error during client.torrents_delete: %s', ex)
 
 
 class DeSeedClient(SeedClientBase):
@@ -478,6 +572,39 @@ class DeSeedClient(SeedClientBase):
             activeList.append(at)
         return activeList
 
+    def pauseTorrent(self, tor_hash):
+        try:
+            st = self.deClient.call('core.get_torrent_status', tor_hash, ['state'])
+            # breakpoint()
+            if st[b'state'] == b'Paused':
+                self.deClient.call('core.resume_torrent', [tor_hash])
+            else:
+                self.deClient.call('core.pause_torrent', [tor_hash])
+        except Exception as ex:
+            log.error('There was an error during core.get_torrent_status: %s', ex)
+
+    def reStatusTorrent(self, dbid, tor_hash):
+        try:
+            st = self.deClient.call('core.get_torrent_status', tor_hash, ['state'])
+            dbtor = Torrent.objects.get(torrent_id=dbid)
+            # breakpoint()
+            dbtor.status = st[b'state'].decode("utf-8")
+            dbtor.save()
+            return dbtor.status
+        except Exception as ex:
+            log.error('There was an error during core.get_torrent_status : %s', ex)
+            dbtor = Torrent.objects.get(torrent_id=dbid)
+            # breakpoint()
+            dbtor.status = '_NOT_FOUND_'
+            dbtor.save()
+            return dbtor.status
+
+    def deleteTorrent(self, tor_hash):
+        try:
+            self.deClient.call('core.remove_torrent', tor_hash, True)
+        except Exception as ex:
+            log.error('There was an error during core.remove_torrent : %s', ex)
+        
 
 class ActiveTorrent(object):
     def __init__(self, torrent_hash, scname, name, size, progress,

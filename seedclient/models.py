@@ -37,7 +37,9 @@ class SeedClientSetting(models.Model):
     size_total = models.BigIntegerField(default=0, verbose_name="种子总大小")
     num_active = models.BigIntegerField(default=0, verbose_name="活跃种子数")
     num_downloading = models.BigIntegerField(default=0, verbose_name="正在下载")
-    root_dir = models.CharField(max_length=255, default='', verbose_name="存储根目录")
+    root_dir = models.CharField(max_length=255,
+                                default='',
+                                verbose_name="存储根目录")
 
     class Meta:
         db_table = 'seed_client'
@@ -48,10 +50,14 @@ class SeedClientSetting(models.Model):
 
 class GuessCategory(models.Model):
     cat_id = models.BigAutoField(primary_key=True)
-    label = models.CharField(max_length=255)
+    label = models.CharField(max_length=255, null=True)
     size = models.BigIntegerField(default=0)
     count = models.IntegerField(default=0)
-    location = models.CharField(max_length=255)
+    location = models.CharField(max_length=255, null=True)
+    root_dir = models.CharField(max_length=255,
+                                default='',
+                                null=True,
+                                blank=True)
 
     def _get_size_str(self):
         return HumanBytes.format(self.size)
@@ -93,6 +99,7 @@ class TrackerCategory(models.Model):
     class Meta:
         db_table = 'tracker_category'
 
+
 class Torrent(models.Model):
     torrent_id = models.BigAutoField(primary_key=True)
     sclient = models.ForeignKey(SeedClientSetting, on_delete=models.CASCADE)
@@ -105,7 +112,10 @@ class Torrent(models.Model):
     origin_category = models.CharField(max_length=128)
     status = models.CharField(max_length=32)
     categorized = models.IntegerField(default=0)
-    groupname = models.CharField(max_length=32, default='', null=True, blank=True)
+    groupname = models.CharField(max_length=32,
+                                 default='',
+                                 null=True,
+                                 blank=True)
 
     guess_category = models.ForeignKey(GuessCategory,
                                        on_delete=models.SET_NULL,
@@ -134,14 +144,27 @@ class Torrent(models.Model):
 
 class CategorizeStep(models.Model):
     catstep_id = models.BigAutoField(primary_key=True)
-    sclient = models.ForeignKey(SeedClientSetting, null=True, blank=True, on_delete=models.SET_NULL)
+    sclient = models.ForeignKey(SeedClientSetting,
+                                null=True,
+                                blank=True,
+                                on_delete=models.SET_NULL)
     location_category = models.ForeignKey(LocationCategory,
                                           on_delete=models.SET_NULL,
                                           blank=True,
                                           null=True)
     totalTorrentNum = models.IntegerField(default=0)
-    currentProceedingNum  = models.IntegerField(default=0)
+    currentProceedingNum = models.IntegerField(default=0)
     totalMovedNum = models.IntegerField(default=0)
+    trackList = models.CharField(max_length=1024, default='')
+
+
+class MoveList(models.Model):
+    movelist_id = models.BigAutoField(primary_key=True)
+    torrent = models.ForeignKey(Torrent,
+                                null=True,
+                                blank=True,
+                                on_delete=models.SET_NULL)
+    moveto_location = models.CharField(max_length=255, default='')
 
 
 class SpeedingTorrent(models.Model):
@@ -154,7 +177,7 @@ class SpeedingTorrent(models.Model):
     addedDate = models.DateTimeField(default=0, blank=True)
     status = models.CharField(max_length=32, null=True)
 
-    last_uploaded = models.BigIntegerField(default=0)    
+    last_uploaded = models.BigIntegerField(default=0)
     delta_uploaded = models.BigIntegerField(default=0)
     last_downloaded = models.BigIntegerField(default=0)
     delta_downloaded = models.BigIntegerField(default=0)

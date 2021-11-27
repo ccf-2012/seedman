@@ -13,7 +13,7 @@ class SeedClientForm(forms.ModelForm):
     # password = forms.CharField(widget=forms.PasswordInput)
     username = forms.CharField(label='用户名', required=False)
     password = forms.CharField(label='密码', required=False)
-    root_dir = forms.CharField(label='存储根目录', required=False)
+    # root_dir = forms.CharField(label='存储根目录', required=False)
     class Meta:
         model = SeedClientSetting
-        fields = ['clienttype', 'name', 'host', 'port', 'username', 'password', 'root_dir']
+        fields = ['clienttype', 'name', 'host', 'port', 'username', 'password']

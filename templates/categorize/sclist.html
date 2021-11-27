@@ -7,7 +7,6 @@
 				<th scope="col" style="width: 14%;">名称</th>
 				<th scope="col" style="width: 16%;">主机</th>
 				<th scope="col" style="width: 9%;">端口</th>
-				<th scope="col" style="width: 15%;">存储根目录</th>
 				<th scope="col" style="text-align: center;width: 20%;">开始</th>
 			</tr>
 		</thead>
@@ -18,7 +17,6 @@
 				<td scope="col"> {{ item.name }} </td>
 				<td scope="col"> {{ item.host }} </td>
 				<td scope="col"> {{ item.port }} </td>
-				<td scope="col"> {{ item.root_dir }} </td>
 				<td scope="col" style="text-align: center">
 					<a href="{% url 'cat_step0select' item.seedclient_id %}" type='submit' class="btn btn-outline-primary ">开始分类</a>
 				</td>

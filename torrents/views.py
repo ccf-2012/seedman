@@ -1,7 +1,8 @@
 import re
+import background_task
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
 # from django.views import generic
 from django.conf import settings
@@ -10,6 +11,8 @@ from seedclient.humanbytes import HumanBytes
 from seedclient.models import Torrent, GuessCategory, TrackerCategory
 from django.db.models import Q
 from ajax_datatable.views import AjaxDatatableView
+from seedclient import sclient as SeedClientUtil
+from torrents.tasks import backgroundRestatus
 
 
 class TableView(AjaxDatatableView):
@@ -110,8 +113,24 @@ class TableView(AjaxDatatableView):
             'autofilter': True,
         },
         {
+            'name': 'pause',
+            'placeholder': True,
+            'visible': True,
+            'title': '暂停/恢复',
+            'searchable': False,
+            'orderable': False,
+        },
+        {
+            'name': 'delete',
+            'placeholder': True,
+            'visible': True,
+            'title': '删除',
+            'searchable': False,
+            'orderable': False,
+        },
+        {
             'name': 'hash',
-            'visible': False,
+            'visible': True,
             'title': 'hash',
             'searchable': False,
             'orderable': False,
@@ -126,6 +145,10 @@ class TableView(AjaxDatatableView):
     ]
 
     def customize_row(self, row, obj):
+        row['pause'] = '<a href=\"/torrent/pause/%s\"> 停/启 </a>' % (
+            obj.torrent_id)
+        row['delete'] = '<a href=\"/torrent/delete/%s\"> 删除 </a>' % (
+            obj.torrent_id)
         if obj.tracker is not None:
             row['trackerlink'] = '<a href=\"%s\" target=\"_blank\">%s</a>' % (
                 self._get_search_link(obj), obj.tracker)
@@ -199,7 +222,7 @@ class TableView(AjaxDatatableView):
         }
         for original, replacement in dilimers.items():
             sstr = sstr.replace(original, replacement)
-        sstr = re.sub('(BDMV|BDRemux)', '', sstr, flags=re.I)        
+        sstr = re.sub('(BDMV|BDRemux)', '', sstr, flags=re.I)
         sstr = re.sub(' +', ' ', sstr).strip()
 
         sstr = re.sub('\S+\w+@\w*', '', sstr)
@@ -208,7 +231,7 @@ class TableView(AjaxDatatableView):
         #     sstr = m.group(0)
 
         chtitle = sstr
-            
+
         m = re.search(
             '^.*[\u4e00-\u9fa5\u3041-\u30fc](S\d+| |\.|\d|-)*(?=[A-Z])', sstr)
         if m:
@@ -237,6 +260,7 @@ class TableView(AjaxDatatableView):
             return self.SEARCH_URL_PREFIX[obj.tracker] + sstr.strip()
         else:
             return ''
+
 
 @login_required
 def torrentIndex(request):
@@ -276,3 +300,23 @@ def torrentListView(request):
     return render(request,
                   template_name='torrent/list.html',
                   context={'page_obj': pageItems})
+
+@login_required
+def pauseTorrent(request, tor_id):
+    dbtor = get_object_or_404(Torrent, pk=tor_id)
+    client = SeedClientUtil.getSeedClientObj(dbtor.sclient)
+    if client.connect():
+        client.pauseTorrent(dbtor.hash)
+        backgroundRestatus(dbtor.sclient.name, dbtor.torrent_id, dbtor.hash)
+
+    return redirect('tor_index')
+
+
+@login_required
+def deleteTorrentAndReseed(request, tor_id):
+    dbtor = get_object_or_404(Torrent, pk=tor_id)
+    client = SeedClientUtil.getSeedClientObj(dbtor.sclient)
+    if client.connect():
+        client.deleteTorrentAndReseed(dbtor.name, dbtor.size)
+
+    return redirect('tor_index')
