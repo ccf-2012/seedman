@@ -87,7 +87,7 @@ class GuessCategoryUtils:
         return True
 
     def categoryTvByName(torName):
-        if re.search(r'[E|S]\d+\W|EP\d+\W|\d+季|第\w{1,3}季\W', torName, re.I):
+        if re.search(r'[ES]\d+\W|EP\d+\W|\d+季|第\w{1,3}季\W', torName, re.I):
             GuessCategoryUtils.setCategory('TV')
         elif re.search(r'\Wcomplete\W|Full.Season|全\d+集|\d+集全', torName, re.I):
             GuessCategoryUtils.setCategory('TV')
@@ -122,8 +122,6 @@ class GuessCategoryUtils:
             return torName
 
     def parseGroup(torName):
-        # if torName.endswith('FHDMv'):
-        #     breakpoint()
         sstr = GuessCategoryUtils.cutExt(torName)
         match = re.search(r'[@\-￡]\s?(\w{3,12})\b(?!.*[@\-￡].*)$', sstr, re.I)
         if match:
@@ -192,10 +190,10 @@ class GuessCategoryUtils:
         if GuessCategoryUtils.categoryByExt(torName):
             return GuessCategoryUtils.category, GuessCategoryUtils.group
 
-        if GuessCategoryUtils.categoryByGroup(GuessCategoryUtils.group):
+        if GuessCategoryUtils.categoryTvByName(torName):
             return GuessCategoryUtils.category, GuessCategoryUtils.group
 
-        if GuessCategoryUtils.categoryTvByName(torName):
+        if GuessCategoryUtils.categoryByGroup(GuessCategoryUtils.group):
             return GuessCategoryUtils.category, GuessCategoryUtils.group
 
         if GuessCategoryUtils.categoryByKeyword(torName):
