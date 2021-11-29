@@ -82,6 +82,8 @@ class GuessCategoryUtils:
             GuessCategoryUtils.setCategory('Music')
         elif re.search(r'(乐团|交响曲|协奏曲|二重奏|专辑\b)', torName):
             GuessCategoryUtils.setCategory('Music')
+        elif re.search(r'\bHDTV\b', torName):
+            GuessCategoryUtils.setCategory('HDTV')
         else:
             return False
         return True
@@ -91,8 +93,6 @@ class GuessCategoryUtils:
             GuessCategoryUtils.setCategory('TV')
         elif re.search(r'\Wcomplete\W|Full.Season|全\d+集|\d+集全', torName, re.I):
             GuessCategoryUtils.setCategory('TV')
-        elif re.search(r'\bHDTV\b', torName):
-            GuessCategoryUtils.setCategory('HDTV')
         else:
             return False
         return True
@@ -112,12 +112,13 @@ class GuessCategoryUtils:
             return False
         return True
 
+
     def cutExt(torName):
         tortup = os.path.splitext(torName)
         torext = tortup[1].lower()
-        mvext = ['.mkv', '.ts', '.m2ts', '.vob', '.mpg', '.mp4', '.3gp']
+        mvext = ['.mkv', '.ts', '.m2ts', '.vob', '.mpg', '.mp4', '.3gp', '.mov', '.tp']
         if torext in mvext:
-            return tortup[0]
+            return tortup[0].strip()
         else:
             return torName
 
