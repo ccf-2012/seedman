@@ -1,5 +1,5 @@
 import re
-import PTN
+# import PTN
 import os
 
 
@@ -13,6 +13,9 @@ class CategoryItem:
 class GuessCategoryUtils:
     # 有些组生产 TV Series，但是在种子名上不显示 S01 这些
     TV_GROUPS = ['CMCTV', 'FLTTH']
+    WEB_GROUPS = ['CHDWEB', 'PTERWEB', 'HARESWEB', 'DBTV', 'QHSTUDIO',
+                 'LEAGUEWEB', 'HDCTV', '52KHD', 'PTHWEB', 'OURTV', 'ILOVETV']
+
     # 有些组专门生产 MV
     MV_GROUPS = ['PTERMV', 'MELON', 'BUGS!']
     # 有些组专门生产 Audio
@@ -82,12 +85,10 @@ class GuessCategoryUtils:
             return False
         return True
 
-    def categoryTvByName(torName, ptnInfo):
+    def categoryTvByName(torName):
         if re.search(r'[E|S]\d+\W|EP\d+\W|\d+季|第\w{1,3}季\W', torName, re.I):
             GuessCategoryUtils.setCategory('TV')
-        elif re.search(r'\Wcomplete\W|全\d+集|\d+集全', torName, re.I):
-            GuessCategoryUtils.setCategory('TV')
-        elif ptnInfo.__contains__('season') or ptnInfo.__contains__('episode'):
+        elif re.search(r'\Wcomplete\W|Full.Season|全\d+集|\d+集全', torName, re.I):
             GuessCategoryUtils.setCategory('TV')
         else:
             return False
@@ -99,6 +100,8 @@ class GuessCategoryUtils:
         elif group in GuessCategoryUtils.AUDIO_GROUPS:
             GuessCategoryUtils.setCategory('Audio')
         elif group in GuessCategoryUtils.TV_GROUPS:
+            GuessCategoryUtils.setCategory('TV')
+        elif group in GuessCategoryUtils.WEB_GROUPS:
             GuessCategoryUtils.setCategory('TV')
         elif group in GuessCategoryUtils.MOVIE_ENCODE_GROUPS:
             GuessCategoryUtils.setCategory('MovieEncode')
@@ -129,33 +132,45 @@ class GuessCategoryUtils:
 
         return None
 
-    def categoryByQuality(torName, ptnInfo):
-        if ptnInfo.__contains__('quality'):
+    def getResolution(torName):
+        match = re.search(r'\b(2160p|1080[pi]|720p)\b', torName, re.I)
+        if match:
+            return match.group(0).strip().lower()
+        else:
+            return ''
+
+    def getQuality(torName):
+        match = re.search(r'\b(BluRay|Blu-ray|WEB-DL|webdl)\b', torName, re.I)
+        if match:
+            return match.group(0).strip().lower()
+        else:
+            return ''
+
+    def categoryByQuality(torName):
+        quality = GuessCategoryUtils.getQuality(torName)
+        resolution = GuessCategoryUtils.getResolution(torName)
+        if quality:
             # 来源为原盘的
-            if ptnInfo['quality'] in ['Blu-ray']:
+            if quality in ['bluray', 'blu-ray']:
                 # Remux, 压制 还是 原盘
                 if re.search(r'\WREMUX\W', torName, re.I):
-                    if ptnInfo.__contains__(
-                            'resolution') and ptnInfo['resolution'] == '2160p':
+                    if resolution == '2160p':
                         GuessCategoryUtils.setCategory('Movie4K')
                     else:
                         GuessCategoryUtils.setCategory('MovieRemux')
                 elif re.search(r'\b(x265|x264)\b', torName, re.I):
-                    if ptnInfo.__contains__(
-                            'resolution') and ptnInfo['resolution'] == '2160p':
+                    if resolution == '2160p':
                         GuessCategoryUtils.setCategory('Movie4K')
                     else:
                         GuessCategoryUtils.setCategory('MovieEncode')
                 else:
-                    if ptnInfo.__contains__(
-                            'resolution') and ptnInfo['resolution'] == '2160p':
+                    if resolution == '2160p':
                         GuessCategoryUtils.setCategory('MovieBDMV4K')
                     else:
                         GuessCategoryUtils.setCategory('MovieBDMV')
             # 来源是 WEB-DL
-            elif ptnInfo['quality'] in ['WEB-DL']:
-                if ptnInfo.__contains__(
-                        'resolution') and ptnInfo['resolution'] == '2160p':
+            elif quality.lower() in ['webdl', 'web-dl']: 
+                if resolution == '2160p':
                     GuessCategoryUtils.setCategory('MovieWeb4K')
                 else:
                     GuessCategoryUtils.setCategory('MovieWebdl')
@@ -171,8 +186,8 @@ class GuessCategoryUtils:
             return GuessCategoryUtils.category, GuessCategoryUtils.group
 
 
-        info = PTN.parse(torName)
-        if GuessCategoryUtils.categoryTvByName(torName, info):
+        # info = PTN.parse(torName)
+        if GuessCategoryUtils.categoryTvByName(torName):
             return GuessCategoryUtils.category, GuessCategoryUtils.group
         if GuessCategoryUtils.categoryByGroup(GuessCategoryUtils.group):
             return GuessCategoryUtils.category, GuessCategoryUtils.group
@@ -181,7 +196,7 @@ class GuessCategoryUtils:
             return GuessCategoryUtils.category, GuessCategoryUtils.group
 
         # 非web组出的
-        if GuessCategoryUtils.categoryByQuality(torName, info):
+        if GuessCategoryUtils.categoryByQuality(torName):
             return GuessCategoryUtils.category, GuessCategoryUtils.group
         else:
             # Other的条件： TV/MV/Audio都匹配不上，quality没标记，各种压制组也对不上
