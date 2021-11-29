@@ -13,11 +13,11 @@ class CategoryItem:
 class GuessCategoryUtils:
     # 有些组生产 TV Series，但是在种子名上不显示 S01 这些
     TV_GROUPS = ['CMCTV', 'FLTTH']
-    WEB_GROUPS = ['CHDWEB', 'PTERWEB', 'HARESWEB', 'DBTV', 'QHSTUDIO',
+    WEB_GROUPS = ['CHDWEB', 'PTERWEB', 'HARESWEB', 'DBTV', 'QHSTUDIO', 
                  'LEAGUEWEB', 'HDCTV', '52KHD', 'PTHWEB', 'OURTV', 'ILOVETV']
 
     # 有些组专门生产 MV
-    MV_GROUPS = ['PTERMV', 'MELON', 'BUGS!']
+    MV_GROUPS = ['PTERMV', 'FHDMV', 'MELON', 'HARESMV', 'BUGS!']
     # 有些组专门生产 Audio
     AUDIO_GROUPS = ['PTHAUDIO', 'HDSAB']
     # 有些组专门作压制，但是不在种子名上标记
@@ -39,6 +39,7 @@ class GuessCategoryUtils:
         'MovieBDMV': ['MovieBDMV', '35', 0, 'MovieBDMV'],  # 原盘, 适合播放机 & kodi
         # 原盘 4K, 适合播放机 & kodi
         'MovieBDMV4K': ['MovieBDMV4K', '35', 0, 'MovieBDMV4K'],
+        'HDTV': ['HDTV', '33', 0, 'HDTV'],
         'Other': ['Other', '33', 0, 'Others']
     }
 
@@ -74,12 +75,12 @@ class GuessCategoryUtils:
             GuessCategoryUtils.setCategory('MV')
         elif re.search(r'\bBugs!.?\.mp4', torName, re.I):
             GuessCategoryUtils.setCategory('MV')
-        elif re.search(r'(\bVarious Artists|\bMQA\b|整轨|分轨|XRCD\d{1,3})\b',
+        elif re.search(r'(\bVarious Artists|\bMQA\b|整轨|\b分轨|\b无损|\bLPCD|\bSACD|XRCD\d{1,3})',
                        torName, re.I):
             GuessCategoryUtils.setCategory('Music')
-        elif re.search(r'(\b\d+ ?CD|24-96|24-192|SACD|CD[\s-]+FLAC|FLAC[\s-]+CD)\b', torName):
+        elif re.search(r'(\b\d+ ?CD|24-96|24\-192|24\-44\.1|FLAC.*24bit|FLAC.*44|FLAC.*48|WAV.*CUE|FLAC.*CUE|\[FLAC\]|FLAC.+WEB\b|FLAC.*Album|CD[\s-]+FLAC|FLAC[\s-]+CD)', torName, re.I):
             GuessCategoryUtils.setCategory('Music')
-        elif re.search(r'(乐团|交响曲|协奏曲|二重奏)', torName):
+        elif re.search(r'(乐团|交响曲|协奏曲|二重奏|专辑\b)', torName):
             GuessCategoryUtils.setCategory('Music')
         else:
             return False
@@ -90,6 +91,8 @@ class GuessCategoryUtils:
             GuessCategoryUtils.setCategory('TV')
         elif re.search(r'\Wcomplete\W|Full.Season|全\d+集|\d+集全', torName, re.I):
             GuessCategoryUtils.setCategory('TV')
+        elif re.search(r'\bHDTV\b', torName):
+            GuessCategoryUtils.setCategory('HDTV')
         else:
             return False
         return True
@@ -110,16 +113,16 @@ class GuessCategoryUtils:
         return True
 
     def cutExt(torName):
-        sstr = torName
-        arext = ['.mkv', '.ts', '.m2ts', '.vob', '.mpg']
-        for sext in arext:
-            if sstr.endswith(sext):
-                sstr = sstr[:-len(sext)]
-                return sstr
-        return sstr
+        tortup = os.path.splitext(torName)
+        torext = tortup[1].lower()
+        mvext = ['.mkv', '.ts', '.m2ts', '.vob', '.mpg', '.mp4', '.3gp']
+        if torext in mvext:
+            return tortup[0]
+        else:
+            return torName
 
     def parseGroup(torName):
-        # if torName.endswith('-PTer.mkv'):
+        # if torName.endswith('FHDMv'):
         #     breakpoint()
         sstr = GuessCategoryUtils.cutExt(torName)
         match = re.search(r'[@\-￡]\s?(\w{3,12})\b(?!.*[@\-￡].*)$', sstr, re.I)
@@ -133,16 +136,20 @@ class GuessCategoryUtils:
         return None
 
     def getResolution(torName):
-        match = re.search(r'\b(2160p|1080[pi]|720p)\b', torName, re.I)
+        match = re.search(r'\b(2160p|1080[pi]|720p|576p|480p)\b', torName, re.I)
         if match:
             return match.group(0).strip().lower()
         else:
             return ''
 
     def getQuality(torName):
-        match = re.search(r'\b(BluRay|Blu-ray|WEB-DL|webdl)\b', torName, re.I)
+        match = re.search(r'\b(Blu[\-\. ]?Ray|WEB[\-\. ]?DL)\b', torName, re.I)
         if match:
-            return match.group(0).strip().lower()
+            groupstr = match.group(0).strip().lower()
+            if 'blu' in groupstr:
+                return 'BLURAY'
+            else:
+                return 'WEBDL'
         else:
             return ''
 
@@ -151,7 +158,7 @@ class GuessCategoryUtils:
         resolution = GuessCategoryUtils.getResolution(torName)
         if quality:
             # 来源为原盘的
-            if quality in ['bluray', 'blu-ray']:
+            if quality == 'BLURAY':
                 # Remux, 压制 还是 原盘
                 if re.search(r'\WREMUX\W', torName, re.I):
                     if resolution == '2160p':
@@ -169,7 +176,7 @@ class GuessCategoryUtils:
                     else:
                         GuessCategoryUtils.setCategory('MovieBDMV')
             # 来源是 WEB-DL
-            elif quality.lower() in ['webdl', 'web-dl']: 
+            elif quality == 'WEBDL': 
                 if resolution == '2160p':
                     GuessCategoryUtils.setCategory('MovieWeb4K')
                 else:
@@ -185,11 +192,10 @@ class GuessCategoryUtils:
         if GuessCategoryUtils.categoryByExt(torName):
             return GuessCategoryUtils.category, GuessCategoryUtils.group
 
-
-        # info = PTN.parse(torName)
-        if GuessCategoryUtils.categoryTvByName(torName):
-            return GuessCategoryUtils.category, GuessCategoryUtils.group
         if GuessCategoryUtils.categoryByGroup(GuessCategoryUtils.group):
+            return GuessCategoryUtils.category, GuessCategoryUtils.group
+
+        if GuessCategoryUtils.categoryTvByName(torName):
             return GuessCategoryUtils.category, GuessCategoryUtils.group
 
         if GuessCategoryUtils.categoryByKeyword(torName):
