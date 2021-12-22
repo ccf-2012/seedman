@@ -2,7 +2,7 @@
 {% load static %}
 {% block stylesheet %}
 <link href="{% static 'ajax_datatable/css/style.css' %}" rel="stylesheet" />
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">  
+<link rel="stylesheet" type="text/css" href="{% static 'css/jquery.dataTables.css' %}">  
 {% endblock %}
 
 
@@ -18,7 +18,7 @@
 
 {% block script%}
 <!-- <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script> -->
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
+<script type="text/javascript" charset="utf8" src="{% static 'js/jquery.dataTables.js' %}"></script>
 
 <script type="text/javascript" charset="utf8" src="{% static 'js/datatableview.js' %}"></script>
 <script type="text/javascript">

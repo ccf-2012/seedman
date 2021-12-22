@@ -1,7 +1,11 @@
-{% extends "base_generic.html" %} {% block stylesheet %}
+{% extends "base_generic.html" %} 
+{% load static %}
+{% block stylesheet %}
 <!-- <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-{% endblock %} {% block content %}
+<script src="{% static 'js/chart.js' %}"></script>
+{% endblock %} 
+
+{% block content %}
 
 
 

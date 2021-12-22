@@ -1,9 +1,9 @@
 {% extends "base_generic.html" %} 
 {% load static %}
 {% block stylesheet %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'js/chart.js' %}"></script>
 <link href="{% static 'ajax_datatable/css/style.css' %}" rel="stylesheet" />
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">  
+<link rel="stylesheet" type="text/css" href="{% static 'css/jquery.dataTables.css' %}">  
 {% endblock %} 
 
 {% block content %}
